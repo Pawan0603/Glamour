@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@tailwind utilities;
-
 /* Salon & Beauty Booking - Premium Design System */
 
 @layer base {
@@ -253,4 +251,5 @@
 .read-the-docs {
   color: #888;
 }
+
 

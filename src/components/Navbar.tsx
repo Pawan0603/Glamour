@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
+
 type NavLink = {
   name: string;
   href: string;
@@ -17,7 +18,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
   const pathname = usePathname();
-
+  
   const navLinks: NavLink[] = [
     { name: "Home", href: "/" },
     { name: "Salons", href: "/salons" },
@@ -37,16 +38,19 @@ export default function Navbar() {
     setIsOpen(false);
   }, [pathname]);
 
+  if(pathname === "/auth") {
+    return null; // Do not render Navbar on /auth page
+  }
+
   return (
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        hasScrolled
-          ? "bg-[#ffffffdb] backdrop-blur-lg border-b border-border shadow-sm"
-          : "bg-[#ffffff94] backdrop-blur-md border-b border-transparent"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${hasScrolled
+        ? "bg-[#ffffffdb] backdrop-blur-lg border-b border-border shadow-sm"
+        : "bg-[#ffffff94] backdrop-blur-md border-b border-transparent"
+        }`}
     >
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between max-w-7xl m-auto h-16 md:h-20">
@@ -58,7 +62,7 @@ export default function Navbar() {
               className="flex items-center gap-2"
             >
               <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl gradient-primary flex items-center justify-center shadow-soft">
-                <Scissors className="w-4 h-4 md:w-5 md:h-5 text-primary-foreground" />
+                <Scissors className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
               <span className="font-display text-lg md:text-2xl font-semibold">
                 Glamour
@@ -77,11 +81,10 @@ export default function Navbar() {
               >
                 <Link
                   href={link.href}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    pathname === link.href
-                      ? "text-primary bg-primary/10"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                  }`}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${pathname === link.href
+                    ? "text-[#FF6633] bg-[#FF6633]/10"
+                    : "text-[#140a2d] hover:text-foreground hover:bg-[#1e145f]/3"
+                    }`}
                 >
                   {link.name}
                 </Link>
@@ -91,14 +94,26 @@ export default function Navbar() {
 
           {/* Desktop Auth */}
           <div className="hidden lg:flex items-center gap-2">
-            <Link href="/auth">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/auth">
-              <Button className="gradient-primary shadow-soft">
-                Register
-              </Button>
-            </Link>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <Link href="/auth">
+                <Button variant="ghost" className="font-medium hover:bg-[#fc7d52] hover:text-white cursor-pointer">Login</Button>
+              </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <Link href="/auth">
+                <Button className="gradient-primary shadow-soft font-medium text-white">
+                  Register
+                </Button>
+              </Link>
+            </motion.div>
           </div>
 
           {/* Mobile Toggle */}
@@ -151,11 +166,10 @@ export default function Navbar() {
                   >
                     <Link
                       href={link.href}
-                      className={`block py-3 px-4 rounded-lg font-medium transition-colors ${
-                        pathname === link.href
-                          ? "text-primary bg-primary/10"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
+                      className={`block py-3 px-4 rounded-lg font-medium transition-colors ${pathname === link.href
+                        ? "text-[#FF6633] bg-[#FF6633]/10"
+                        : "text-[#140a2d] hover:text-foreground hover:bg-[#1e145f]/3"
+                        }`}
                     >
                       {link.name}
                     </Link>

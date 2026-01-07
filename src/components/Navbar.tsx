@@ -38,7 +38,7 @@ export default function Navbar() {
     setIsOpen(false);
   }, [pathname]);
 
-  if(pathname === "/auth") {
+  if(pathname === "/auth" || pathname === "/owner/dashboard" || pathname === "/owner/services" || pathname === "/owner/barbers" || pathname === "/owner/appointments" || pathname === "/owner/profile") {
     return null; // Do not render Navbar on /auth page
   }
 

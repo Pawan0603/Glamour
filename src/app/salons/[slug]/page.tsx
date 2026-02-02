@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ServiceCard from '@/components/salon/ServiceCard';
 import BarberCard from '@/components/salon/BarberCard';
+import Link from "next/link";
 
 const mockSalonData = {
   id: "1",
@@ -89,7 +90,7 @@ export default function Page() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-        
+
         <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
           <div className="container mx-auto max-w-6xl">
             <motion.div
@@ -250,6 +251,32 @@ export default function Page() {
                         <p className="text-sm text-muted-foreground">{salon.location}</p>
                       </div>
                     </div>
+                  </div>
+                </div>
+
+                {/* Location Info Card */}
+                <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Location Info</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Address</p>
+                        <p className="text-sm text-muted-foreground">{salon.location}</p>
+                      </div>
+                    </div>
+
+                    <Link href={`https://www.google.com/maps/dir/?api=1&destination=19.953234,79.291301`} target="_blank" rel="noopener noreferrer">
+                      <Button className="w-full mb-3" size="lg">
+                        Get Directions
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                    <p className="text-center text-sm text-muted-foreground">
+                      Open in Maps application
+                    </p>
                   </div>
                 </div>
               </motion.div>

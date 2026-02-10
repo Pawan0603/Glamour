@@ -268,7 +268,7 @@ export default function Page() {
                       </div>
                     </div>
 
-                    <Link href={`https://www.google.com/maps/dir/?api=1&destination=19.953234,79.291301`} target="_blank" rel="noopener noreferrer">
+                    <Link href={`https://www.google.com/maps/dir/?api=1&destination=19.9434348,79.2957364`} target="_blank" rel="noopener noreferrer">
                       <Button className="w-full mb-3" size="lg">
                         Get Directions
                         <ChevronRight className="w-4 h-4 ml-2" />

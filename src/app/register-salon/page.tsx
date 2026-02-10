@@ -1,13 +1,13 @@
 'use client';
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { 
-  Building2, 
-  MapPin, 
-  Clock, 
-  ImagePlus, 
-  Upload, 
-  X, 
+import {
+  Building2,
+  MapPin,
+  Clock,
+  ImagePlus,
+  Upload,
+  X,
   Check,
   Phone,
   Mail,
@@ -20,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import axios from "axios";
 
 const steps = [
   { id: 1, title: "Basic Info", icon: Building2 },
@@ -38,7 +39,7 @@ const SalonRegistration = () => {
   const [isDragging, setIsDragging] = useState(false);
 
   const toggleDay = (day: string) => {
-    setSelectedDays(prev => 
+    setSelectedDays(prev =>
       prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
     );
   };
@@ -66,10 +67,30 @@ const SalonRegistration = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
+  const handleSubmit = async () => {
+    const data = { name: "pawan salon", add: "nothing" };
+
+    try {
+      const response = await axios.post('/api/register-salon', data, {
+        headers: {
+          "Content-Type": "application/json",
+          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTgxMDBkMWE4MWNlZDFhZjg5NDNiYWQiLCJlbWFpbCI6Ind3dy5wYXdhbm10aGFrcmVAZ21haWwuY29tIiwicm9sZSI6ImN1c3RvbWVyIiwiaWF0IjoxNzcwNzQzODQzLCJleHAiOjE3NzEzNDg2NDN9.QTzlhzyhynVLsjPRXDnU2gq4U5eEhpO6-VZo5W0OvP0"
+        }
+      });
+
+      console.log("Response from server:", response.data);
+      alert("Salon registered!");
+
+    } catch (error: any) {
+      // It's better to log error.response.data to see your custom error messages
+      console.error("Server Error:", error.response?.data || error.message);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
@@ -118,20 +139,18 @@ const SalonRegistration = () => {
                     className="flex flex-col items-center relative z-10"
                   >
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        isCompleted
-                          ? "bg-primary text-primary-foreground"
-                          : isCurrent
+                      className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${isCompleted
+                        ? "bg-primary text-primary-foreground"
+                        : isCurrent
                           ? "bg-primary text-primary-foreground shadow-lg shadow-primary/30"
                           : "bg-muted text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                     </div>
                     <span
-                      className={`mt-2 text-sm font-medium ${
-                        isCurrent ? "text-primary" : "text-muted-foreground"
-                      }`}
+                      className={`mt-2 text-sm font-medium ${isCurrent ? "text-primary" : "text-muted-foreground"
+                        }`}
                     >
                       {step.title}
                     </span>
@@ -151,9 +170,8 @@ const SalonRegistration = () => {
             {/* Section 1: Basic Information */}
             <motion.div
               variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${
-                currentStep === 1 ? "ring-2 ring-primary/20" : ""
-              }`}
+              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 1 ? "ring-2 ring-primary/20" : ""
+                }`}
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -234,9 +252,8 @@ const SalonRegistration = () => {
             {/* Section 2: Location Details */}
             <motion.div
               variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${
-                currentStep === 2 ? "ring-2 ring-primary/20" : ""
-              }`}
+              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 2 ? "ring-2 ring-primary/20" : ""
+                }`}
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -289,9 +306,8 @@ const SalonRegistration = () => {
             {/* Section 3: Working Hours */}
             <motion.div
               variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${
-                currentStep === 3 ? "ring-2 ring-primary/20" : ""
-              }`}
+              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 3 ? "ring-2 ring-primary/20" : ""
+                }`}
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -335,11 +351,10 @@ const SalonRegistration = () => {
                         onClick={() => toggleDay(day)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                          selectedDays.includes(day)
-                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        }`}
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${selectedDays.includes(day)
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          }`}
                       >
                         {day}
                       </motion.button>
@@ -352,9 +367,8 @@ const SalonRegistration = () => {
             {/* Section 4: Salon Images */}
             <motion.div
               variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${
-                currentStep === 4 ? "ring-2 ring-primary/20" : ""
-              }`}
+              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
+                }`}
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -372,11 +386,10 @@ const SalonRegistration = () => {
                 onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageUpload(); }}
                 onClick={handleImageUpload}
                 whileHover={{ scale: 1.01 }}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${
-                  isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
-                }`}
+                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
+                  }`}
               >
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
@@ -441,6 +454,7 @@ const SalonRegistration = () => {
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
+                  onClick={handleSubmit}
                   size="lg"
                   className="w-full sm:w-auto px-8 h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                 >

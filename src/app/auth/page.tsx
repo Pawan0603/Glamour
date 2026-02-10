@@ -6,6 +6,7 @@ import { ArrowRight, Eye, EyeOff, Lock, Mail, Scissors, User } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import axios, { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
 
@@ -15,6 +16,8 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // const { toast } = useToast();
+
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,6 +45,7 @@ export default function Page() {
 
       let res = await axios.post('api/login', data);
       toast.success(res.data?.message)
+      router.push('/')
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "Somethin went worng.")
@@ -56,6 +60,7 @@ export default function Page() {
     try {
       let res = await axios.post('/api/register', formData);
       toast.success(res.data?.message);
+      router.push('/')
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "Somethin went worng.")

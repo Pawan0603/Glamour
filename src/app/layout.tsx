@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import { Toaster } from "@/components/ui/sonner"
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -34,6 +35,7 @@ export default function RootLayout({
       >
         <Navbar />
         {children}
+        <Toaster richColors={true} theme={"light"}/>
       </body>
     </html>
   );

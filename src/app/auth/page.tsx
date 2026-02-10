@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from 'next/link';
 import { ArrowRight, Eye, EyeOff, Lock, Mail, Scissors, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import axios, { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 export default function Page() {
 
@@ -30,10 +32,62 @@ export default function Page() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
+  const logIn = async () => {
+    setIsLoading(true);
+    try {
+      const data = {
+        email: formData.email,
+        password: formData.password
+      }
 
+      let res = await axios.post('api/login', data);
+      toast.success(res.data?.message)
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "Somethin went worng.")
+    } finally {
+      setErrors({});
+      setIsLoading(false);
+    }
+  }
+
+  const register = async () => {
+    setIsLogin(true);
+    try {
+      let res = await axios.post('/api/register', formData);
+      toast.success(res.data?.message);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "Somethin went worng.")
+    } finally {
+      setErrors({});
+      setIsLoading(false);
+    }
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.email) {
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      setErrors((prev) => ({ ...prev, email: "Invalid email format" }));
+    }
+    else if (!formData.password) {
+      setErrors((prev) => ({ ...prev, password: "Password is required" }));
+    } else if (formData.password.length < 6) {
+      setErrors((prev) => ({ ...prev, password: "Password must be at least 6 characters" }));
+    } else if (!isLogin && formData.password !== formData.confirmPassword) {
+      setErrors((prev) => ({ ...prev, confirmPassword: "Passwords do not match" }));
+    } else {
+      if (isLogin) {
+        // Perform login API call
+        logIn();
+      } else {
+        // Perform registration API call
+        register();
+      }
+    }
 
   }
 

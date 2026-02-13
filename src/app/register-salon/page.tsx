@@ -1,6 +1,6 @@
 'use client';
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, number } from "framer-motion";
 import {
   Building2,
   MapPin,
@@ -11,16 +11,20 @@ import {
   Check,
   Phone,
   Mail,
-  FileText
+  FileText,
+  Map,
+  MapPinned
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
+import { SalonFormData } from "@/lib/interfaces";
 
 const steps = [
   { id: 1, title: "Basic Info", icon: Building2 },
@@ -31,17 +35,174 @@ const steps = [
 
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+interface Country {
+  capital: string,
+  currency: string,
+  emoji: string,
+  id: string,
+  iso2: string,
+  iso3: string,
+  name: string,
+  native: string,
+  phonecode: string,
+}
+
+interface States {
+  id: number,
+  name: string,
+  iso2: string
+}
+
+interface Cities {
+  id: number,
+  name: string
+}
+
 const SalonRegistration = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedDays, setSelectedDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
+  // const [selectedDays, setSelectedDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedCoverImage, setUploadedCoverImage] = useState<string | null>(null);
   const [category, setCategory] = useState("unisex");
   const [isDragging, setIsDragging] = useState(false);
 
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [states, setStates] = useState<States[]>([]);
+  const [cities, setCities] = useState<Cities[]>([]);
+
+  const [formData, setFormData] = useState<SalonFormData>({
+    salonName: "",
+    salonCategory: category,
+    phoneNumber: "",
+    email: "",
+    description: "",
+    fullAddress: "",
+    country: "India",
+    state: "",
+    city: "",
+    area_landmark: "",
+    pincode: "",
+    coordinate: {
+      lat: null,
+      lon: null,
+    },
+    openingTime: "09:00",
+    closingTime: "21:00",
+    weeklyAvailabity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    salonCoverImage: "",
+    salonImages: [],
+    // from data end here.................
+    // profilePhoto: "",
+    // services: {
+    //   servicesName: "",
+    //   category: "",
+    //   price: null,
+    //   duration: "",
+    // },
+    // barber: {
+    //   barberName: "",
+    //   experience: null,
+    //   services: []
+    // }
+  });
+
+  useEffect(() => {
+    formData.salonCategory = category;
+  }, [category]);
+
+  const [iso2Country, setIso2Country] = useState<string>("");
+
+  // const getContryList = async () => {
+  //   try {
+  //     const res = await axios.get('https://api.countrystatecity.in/v1/countries',
+  //       {
+  //         headers: { 'X-CSCAPI-KEY': process.env.NEXT_PUBLIC_COUNTRYSTATECITY_API_KEY }
+  //       }
+  //     )
+  //     setCountries(res.data);
+  //     console.log("country: ", res.data);
+  //   } catch (error) {
+  //     toast.error('Country list feching error.')
+  //   }
+  // }
+
+  const getStatesByCountry = async (countryCode: string) => {
+    try {
+      const response = await axios.get(`https://api.countrystatecity.in/v1/countries/${countryCode}/states`, {
+        headers: { 'X-CSCAPI-KEY': process.env.NEXT_PUBLIC_COUNTRYSTATECITY_API_KEY }
+      });
+      setStates(response.data);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.message || "Somthing went worng for fectiong states data");
+    }
+  };
+
+  const getCitiesByState = async (countryCode: string, stateCode: string) => {
+    try {
+      const response = await axios.get(
+        `https://api.countrystatecity.in/v1/countries/${countryCode}/states/${stateCode}/cities`,
+        {
+          headers: { 'X-CSCAPI-KEY': process.env.NEXT_PUBLIC_COUNTRYSTATECITY_API_KEY }
+        }
+      );
+      setCities(response.data);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.message || "Somthing went worng for fectiong states data");
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === "country" && { state: "", city: "" }),
+      ...(name === "state" && { city: "" })
+    }));
+
+    if (name === "country") {
+      const country = countries.find(c => c.name === value);
+      const iso2 = country?.iso2;
+      setIso2Country(iso2 as string);
+      console.log("iso2Country: ", iso2)
+      getStatesByCountry(iso2!);
+    }
+    else if (name === "state") {
+      const state = states.find(s => s.name === value);
+      const iso2State = state?.iso2;
+      // getCitiesByState(iso2Country!, iso2State!)
+      getCitiesByState("IN", iso2State!)
+    }
+  };
+
+  useEffect(() => {
+    // getContryList();
+    getStatesByCountry("IN");
+  }, []);
+
   const toggleDay = (day: string) => {
-    setSelectedDays(prev =>
-      prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]
-    );
+    setFormData(prev => ({
+      ...prev,
+      weeklyAvailabity: prev.weeklyAvailabity.includes(day)
+        ? prev.weeklyAvailabity.filter(d => d !== day)
+        : [...prev.weeklyAvailabity, day]
+    }));
+  };
+
+  const handleCoverImageUpload = () => {
+    // Simulate image upload
+    const newCoverImage = `https://images.unsplash.com/photo-${Math.random().toString().slice(2, 12)}?w=200&h=200&fit=crop`;
+    setUploadedCoverImage(newCoverImage);
+  }
+
+  const removeCoverImage = () => {
+    setUploadedCoverImage(null);
   };
 
   const handleImageUpload = () => {
@@ -69,28 +230,26 @@ const SalonRegistration = () => {
 
   const handleSubmit = async () => {
     const data = { name: "pawan salon", add: "nothing" };
+    console.log(formData)
+    // try {
+    //   const response = await axios.post('/api/register-salon', data, {
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTgxMDBkMWE4MWNlZDFhZjg5NDNiYWQiLCJlbWFpbCI6Ind3dy5wYXdhbm10aGFrcmVAZ21haWwuY29tIiwicm9sZSI6ImN1c3RvbWVyIiwiaWF0IjoxNzcwNzQzODQzLCJleHAiOjE3NzEzNDg2NDN9.QTzlhzyhynVLsjPRXDnU2gq4U5eEhpO6-VZo5W0OvP0"
+    //     }
+    //   });
 
-    try {
-      const response = await axios.post('/api/register-salon', data, {
-        headers: {
-          "Content-Type": "application/json",
-          "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTgxMDBkMWE4MWNlZDFhZjg5NDNiYWQiLCJlbWFpbCI6Ind3dy5wYXdhbm10aGFrcmVAZ21haWwuY29tIiwicm9sZSI6ImN1c3RvbWVyIiwiaWF0IjoxNzcwNzQzODQzLCJleHAiOjE3NzEzNDg2NDN9.QTzlhzyhynVLsjPRXDnU2gq4U5eEhpO6-VZo5W0OvP0"
-        }
-      });
+    //   console.log("Response from server:", response.data);
+    //   alert("Salon registered!");
 
-      console.log("Response from server:", response.data);
-      alert("Salon registered!");
-
-    } catch (error: any) {
-      // It's better to log error.response.data to see your custom error messages
-      console.error("Server Error:", error.response?.data || error.message);
-    }
+    // } catch (error: any) {
+    //   // It's better to log error.response.data to see your custom error messages
+    //   console.error("Server Error:", error.response?.data || error.message);
+    // }
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       <main className="pt-24 pb-16">
         <div className="container mx-auto px-4 max-w-4xl">
           {/* Header */}
@@ -187,8 +346,10 @@ const SalonRegistration = () => {
                   <Label htmlFor="salonName">Salon Name</Label>
                   <Input
                     id="salonName"
+                    name="salonName"
                     placeholder="Enter your salon name"
                     className="h-12"
+                    onChange={handleInputChange}
                   />
                 </div>
 
@@ -214,10 +375,19 @@ const SalonRegistration = () => {
                   <Label htmlFor="phone">Phone Number</Label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <span className="absolute left-9.5 top-5.5 -translate-y-1/2 w-4 h-4 text-muted-foreground text-sm">+91</span>
                     <Input
-                      id="phone"
-                      placeholder="+91 98765 43210"
-                      className="h-12 pl-10"
+                      id="phoneNumber"
+                      name="phoneNumber"
+                      type="tel"
+                      placeholder="98765 43210"
+                      maxLength={10}
+                      className="h-12 pl-17"
+                      onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                        const input = e.currentTarget;
+                        input.value = input.value.replace(/[^0-9]/g, '');
+                      }}
+                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -228,9 +398,11 @@ const SalonRegistration = () => {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
                       id="email"
+                      name="email"
                       type="email"
                       placeholder="salon@example.com"
                       className="h-12 pl-10"
+                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -241,8 +413,10 @@ const SalonRegistration = () => {
                     <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
                     <Textarea
                       id="description"
+                      name="description"
                       placeholder="Describe your salon in a few words..."
                       className="min-h-[100px] pl-10 resize-none"
+                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -266,29 +440,84 @@ const SalonRegistration = () => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="address">Full Address</Label>
+                  <Label htmlFor="fullAddress">Full Address</Label>
                   <Input
-                    id="address"
+                    id="fullAddress"
+                    name="fullAddress"
                     placeholder="Street address, building name, floor..."
                     className="h-12"
+                    onChange={handleInputChange}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="country">Country</Label>
+                  <Select
+                    onValueChange={(value) => handleSelectChange("country", value)}
+                    disabled
+                  >
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue placeholder="India" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>Country</SelectLabel>
+                        {countries.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="state">State</Label>
+                  <Select
+                    onValueChange={(value) => handleSelectChange("state", value)}
+                    disabled={states.length === 0}
+                  >
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue placeholder="Country" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>State</SelectLabel>
+                        {states.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    placeholder="e.g., Mumbai"
-                    className="h-12"
-                  />
+                  <Select
+                    onValueChange={(value) => handleSelectChange("city", value)}
+                    disabled={cities.length === 0}
+                  >
+                    <SelectTrigger className="w-full max-w-48">
+                      <SelectValue placeholder="City" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectLabel>City</SelectLabel>
+                        {cities.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="area">Area / Landmark</Label>
+                  <Label htmlFor="area_landmark">Area / Landmark</Label>
                   <Input
-                    id="area"
+                    id="area_landmark"
+                    name="area_landmark"
                     placeholder="e.g., Near Central Mall"
                     className="h-12"
+                    onChange={handleInputChange}
                   />
                 </div>
 
@@ -296,9 +525,32 @@ const SalonRegistration = () => {
                   <Label htmlFor="pincode">Pincode</Label>
                   <Input
                     id="pincode"
+                    name="pincode"
+                    type="text"
                     placeholder="e.g., 400001"
                     className="h-12"
+                    maxLength={6}
+                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                      const input = e.currentTarget;
+                      input.value = input.value.replace(/[^0-9]/g, '');
+                    }}
+                    onChange={handleInputChange}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="getC0ordinates">Coordinates</Label>
+                  <span className="flex flex-row gap-2">
+                    <Input
+                      id="getCoordinates"
+                      placeholder="e.g., Lat, Lon"
+                      className="h-12"
+                      readOnly
+                    />
+                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="h-12 w-14">
+                      <Button className="h-full w-full cursor-pointer"><MapPinned /></Button>
+                    </motion.div>
+                  </span>
                 </div>
               </div>
             </motion.div>
@@ -323,20 +575,24 @@ const SalonRegistration = () => {
                   <div className="space-y-2">
                     <Label htmlFor="openTime">Opening Time</Label>
                     <Input
-                      id="openTime"
+                      id="openingTime"
+                      name="openingTime"
                       type="time"
                       defaultValue="09:00"
                       className="h-12"
+                      onChange={handleInputChange}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="closeTime">Closing Time</Label>
                     <Input
-                      id="closeTime"
+                      id="closingTime"
+                      name="closingTime"
                       type="time"
                       defaultValue="21:00"
                       className="h-12"
+                      onChange={handleInputChange}
                     />
                   </div>
                 </div>
@@ -351,7 +607,7 @@ const SalonRegistration = () => {
                         onClick={() => toggleDay(day)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${selectedDays.includes(day)
+                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${formData.weeklyAvailabity.includes(day)
                           ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                           }`}
@@ -362,6 +618,77 @@ const SalonRegistration = () => {
                   </div>
                 </div>
               </div>
+            </motion.div>
+
+            {/* section 4 cover img uplode */}
+            <motion.div
+              variants={itemVariants}
+              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
+                }`}
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <ImagePlus className="w-5 h-5 text-primary" />
+                </div>
+                <h2 className="font-display text-xl font-semibold text-foreground">
+                  Salon Cover Images
+                </h2>
+              </div>
+
+              {/* Upload Area */}
+              {uploadedCoverImage === null && <motion.div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleCoverImageUpload(); }}
+                onClick={handleCoverImageUpload}
+                whileHover={{ scale: 1.01 }}
+                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
+                  ? "border-primary bg-primary/5"
+                  : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
+                  }`}
+              >
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                    <Upload className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      Drag & drop images here
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      or click to browse (JPG, PNG up to 5MB)
+                    </p>
+                  </div>
+                </div>
+              </motion.div>}
+
+              {/* Uploaded Images Preview */}
+              {uploadedCoverImage !== null && (
+                <div className="mt-6">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Uploaded Images
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="relative group aspect-square rounded-xl overflow-hidden bg-muted"
+                    >
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                      <motion.button
+                        onClick={(e) => { e.stopPropagation(); removeCoverImage(); }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="absolute top-2 right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="w-3 h-3" />
+                      </motion.button>
+                    </motion.div>
+                  </div>
+                </div>
+              )}
             </motion.div>
 
             {/* Section 4: Salon Images */}

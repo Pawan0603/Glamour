@@ -14,7 +14,7 @@ const Navbar = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
 
   const pathname = usePathname();
-  const { isAuthenticated, toggleMockAuth } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const navLinks = isAuthenticated
     ? [
@@ -99,15 +99,6 @@ const Navbar = () => {
 
           {/* Desktop Right */}
           <div className="hidden lg:flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleMockAuth}
-              className="text-xs text-muted-foreground"
-            >
-              {isAuthenticated ? "Mock Logout" : "Mock Login"}
-            </Button>
-
             <AnimatePresence mode="wait">
               {isAuthenticated ? (
                 <motion.div
@@ -223,7 +214,7 @@ const Navbar = () => {
                       <Button
                         variant="ghost"
                         className="w-full h-12 text-destructive"
-                        onClick={toggleMockAuth}
+                        onClick={logout}
                       >
                         Logout
                       </Button>

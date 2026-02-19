@@ -12,9 +12,9 @@ interface RouteContext {
 export function withAuth(handler: (req: AuthenticatedRequest, context: RouteContext) => Promise<NextResponse>) {
   return async (req: AuthenticatedRequest, context: RouteContext): Promise<NextResponse> => {
     try {
-      const authHeader = req.headers.get("accessToken")
-      // const cookieStore = req.cookies.get("accessToken")
-      // const authHeader = cookieStore?.value;
+      // const authHeader = req.headers.get("accessToken")
+      const cookieStore = req.cookies.get("accessToken")
+      const authHeader = cookieStore?.value;
 
       console.log("Authorization Header:", authHeader);
       //   const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null

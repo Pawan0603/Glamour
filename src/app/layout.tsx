@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { Toaster } from "@/components/ui/sonner"
+import { AuthProvider } from "@/lib/contexts/AuthContext";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -33,9 +34,11 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${inter.variable} antialiased`}
       >
-        <Navbar />
-        {children}
-        <Toaster richColors={true} theme={"light"}/>
+        <AuthProvider>
+          <Navbar />
+          {children}
+          <Toaster richColors={true} theme={"light"} />
+        </AuthProvider>
       </body>
     </html>
   );

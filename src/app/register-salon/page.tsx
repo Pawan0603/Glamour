@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from "react";
-import { motion, number } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   Building2,
   MapPin,
@@ -91,19 +91,6 @@ const SalonRegistration = () => {
     weeklyAvailabity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
     salonCoverImage: "",
     salonImages: [],
-    // from data end here.................
-    // profilePhoto: "",
-    // services: {
-    //   servicesName: "",
-    //   category: "",
-    //   price: null,
-    //   duration: "",
-    // },
-    // barber: {
-    //   barberName: "",
-    //   experience: null,
-    //   services: []
-    // }
   });
 
   useEffect(() => {

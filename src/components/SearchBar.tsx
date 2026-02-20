@@ -1,18 +1,13 @@
-"use client";
+'use client';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Sparkles, X } from "lucide-react";
 
-import { motion } from "framer-motion";
-import { Search, MapPin, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+const popularServices = ["Haircut", "Hair Color", "Manicure", "Facial", "Massage", "Makeup"];
 
-export default function SearchBar() {
-  const popularServices: string[] = [
-    "Haircut",
-    "Hair Color",
-    "Manicure",
-    "Facial",
-    "Massage",
-    "Makeup",
-  ];
+const SearchBar = () => {
+  const [query, setQuery] = useState("");
+  const [focused, setFocused] = useState(false);
 
   return (
     <section className="py-6 md:py-8 relative -mt-16 md:mt-2 z-20">
@@ -22,66 +17,72 @@ export default function SearchBar() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-3xl mx-auto"
         >
-          {/* Search Card */}
-          <div className="bg-card rounded-2xl shadow-elevated p-4 md:p-6 border border-border">
-            <div className="flex flex-col gap-3 md:gap-4">
-              {/* Inputs */}
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                {/* Service */}
-                <div className="flex-1 relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search services or salons..."
-                    className="w-full h-12 md:h-14 pl-12 pr-4 rounded-xl bg-muted border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
-                  />
-                </div>
+          <div className="bg-card rounded-2xl shadow-elevated p-5 md:p-7 border border-border">
 
-                {/* Location */}
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Enter your location..."
-                    className="w-full h-12 md:h-14 pl-12 pr-4 rounded-xl bg-muted border border-border focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
-                  />
-                </div>
-              </div>
+            {/* Unified Search Bar */}
+            <motion.div
+              animate={{ boxShadow: focused ? "0 0 0 3px hsl(var(--primary) / 0.18)" : "0 0 0 0px transparent" }}
+              transition={{ duration: 0.2 }}
+              className="flex items-center gap-3 h-14 md:h-16 bg-muted rounded-xl px-4 border border-border transition-colors duration-200"
+              style={{ borderColor: focused ? "hsl(var(--primary) / 0.5)" : undefined }}
+            >
+              <Search className="w-5 h-5 text-muted-foreground shrink-0" />
 
-              {/* Button */}
-              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto h-12 md:h-14 px-6 md:px-8 gradient-primary shadow-soft rounded-xl font-semibold touch-target text-white"
-                >
-                  <Search className="w-5 h-5 mr-2 text-white" />
-                  Search
-                </Button>
-              </motion.div>
-            </div>
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
+                placeholder="Search salons, services, or treatments..."
+                className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm md:text-base"
+              />
 
-            {/* Popular Services */}
-            <div className="mt-5 md:mt-6 flex flex-wrap items-center gap-2 md:gap-3">
-              <span className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
-                <Sparkles className="w-4 h-4" />
+              <AnimatePresence>
+                {query && (
+                  <motion.button
+                    key="clear"
+                    initial={{ opacity: 0, scale: 0.7 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.7 }}
+                    transition={{ duration: 0.15 }}
+                    onClick={() => setQuery("")}
+                    className="p-1 rounded-full hover:bg-border transition-colors text-muted-foreground"
+                  >
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* Inline Search Button */}
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                className="gradient-primary text-primary-foreground h-9 px-5 rounded-lg font-semibold text-sm shadow-soft shrink-0 hidden md:flex items-center gap-2"
+              >
+                Search
+              </motion.button>
+            </motion.div>
+
+            {/* Popular Tags */}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground mr-1">
+                <Sparkles className="w-3.5 h-3.5" />
                 Popular:
               </span>
-
               {popularServices.map((service, index) => (
                 <motion.button
                   key={service}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, scale: 0.85 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
-                  whileHover={{
-                    scale: 1.05,
-                    backgroundColor: "hsl(var(--primary) / 0.1)",
-                  }}
+                  whileHover={{ scale: 1.06 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-3 md:px-4 py-1.5 md:py-2 rounded-full bg-muted text-xs md:text-sm font-medium border border-border hover:border-primary/30 transition-colors"
+                  onClick={() => setQuery(service)}
+                  className="px-3.5 py-1.5 rounded-full bg-muted text-xs font-medium text-foreground border border-border hover:border-primary/40 hover:bg-primary/5 transition-colors"
                 >
                   {service}
                 </motion.button>
@@ -92,4 +93,6 @@ export default function SearchBar() {
       </div>
     </section>
   );
-}
+};
+
+export default SearchBar;

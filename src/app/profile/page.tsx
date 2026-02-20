@@ -36,7 +36,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { toast } from "sonner";
@@ -75,7 +74,6 @@ export default function Profile() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
         <div className="pt-28 pb-20 flex flex-col items-center justify-center text-center px-4">
           <User className="w-16 h-16 text-muted-foreground mb-4" />
           <h2 className="font-display text-2xl font-bold text-foreground mb-2">
@@ -102,7 +100,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
 
       <main className="pt-24 pb-20">
         <div className="container mx-auto px-4 sm:px-6 max-w-4xl">

@@ -249,15 +249,17 @@ const SalonRegistration = () => {
   const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!); // Apna preset yahan dalein
+    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!);
+
+    formData.append("tags", "temporary");
 
     const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, // Apna cloud name yahan dalein
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
       { method: "POST", body: formData }
     );
 
     const data = await res.json();
-    return data.secure_url; // Ye permanent URL return karega
+    return { url: data.secure_url, publicId: data.public_id }; // Ye permanent URL return karega
   };
 
   const validateForm = () => {
@@ -283,30 +285,40 @@ const SalonRegistration = () => {
 
       if (!validateForm()) return;
 
+      // 1. Cover Image Upload
       let coverUrl = "";
+      let coverPublicId = "";
       if (coverFile) {
-        coverUrl = await uploadToCloudinary(coverFile);
+        const res = await uploadToCloudinary(coverFile);
+        coverUrl = res.url;
+        coverPublicId = res.publicId; // ID yahan mil gayi
       }
 
-      const galleryUrls = await Promise.all(
+      // 2. Gallery Images Upload
+      const galleryUploads = await Promise.all(
         galleryFiles.map((file) => uploadToCloudinary(file))
       );
+
+      const galleryUrls = galleryUploads.map(res => res.url);
+      const galleryPublicIds = galleryUploads.map(res => res.publicId);
 
       const finalData = {
         ...formData,
         salonCoverImage: coverUrl,
-        salonImages: galleryUrls
+        salonImages: galleryUrls,
+        coverPublicId: coverPublicId,     // for updating image tags in backend
+        galleryPublicIds: galleryPublicIds // for updating image tags in backend
       };
 
       const response = await axios.post('/api/register-salon', finalData);
 
       console.log("Response from server:", response.data);
       toast.success("Salon registered!");
-      router.push('/owner/dashboard') 
+      router.push('/owner/dashboard')
 
-    } catch (error: any) {
-      // It's better to log error.response.data to see your custom error messages
-      console.error("Server Error:", error.response?.data || error.message);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "Somethin went worng.")
     } finally {
       setFormSubmitting(false);
     }

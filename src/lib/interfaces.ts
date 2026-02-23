@@ -41,8 +41,8 @@ export interface SalonFormData {
   weeklyAvailabity: string[];
   
   // Images
-  salonCoverImage: string;
-  salonImages: string[];
+  salonCoverImage?: string;
+  salonImages?: string[];
 }
 
 export interface Salon extends SalonFormData {

@@ -1,40 +1,8 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose, { Schema } from "mongoose";
+import { Salon, Coordinates, Barber, Service } from "../interfaces";
 
-interface IService {
-    serviceName: string;
-    category: string;
-    price: number;
-    duration: string;
-}
-interface IBarber {
-    name: string;
-    experience: number;
-    services: string[];
-}
-
-interface ISalon {
-    ownerId: mongoose.Schema.Types.ObjectId;
-    name: string;
-    category: "Men" | "Women" | "Unisex";
-    description?: string;
-    address: {
-        city: string;
-        area: string;
-        pincode: number;
-        fullAddress: string;
-    };
-    openingTime: string;
-    closingTime: string;
-    workingDays: string[];
-    coverImage?: string;
-    images: string[];
-    phone: string;
-    services: IService[];
-    barbers: IBarber[];
-}
-
-const ServiceSchema = new Schema<IService>({
-    serviceName: {
+const ServiceSchema = new Schema<Service>({
+    servicesName: {
         type: String,
         required: [true, "service name is required."],
         trim: true
@@ -53,8 +21,8 @@ const ServiceSchema = new Schema<IService>({
     }
 })
 
-const BarberSchema = new Schema<IBarber>({
-    name: {
+const BarberSchema = new Schema<Barber>({
+    barberName: {
         type: String,
         required: [true, "barber name is required."],
         trim: true
@@ -66,31 +34,73 @@ const BarberSchema = new Schema<IBarber>({
     services: [String]
 })
 
-const SalonSchema = new Schema<ISalon>({
+const CoordinatesSchema = new Schema<Coordinates>({
+    lat: {
+        type: Number,
+        required: [true, 'Coordinate Latitude is required.']
+    },
+    lon: {
+        type: Number,
+        required: [true, 'Coordinate Longitude is required.']
+    }
+})
+
+const SalonSchema = new Schema<Salon>({
     ownerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required: [true, "ownerId is required"]
     },
-    name: {
+    salonName: {
         type: String,
         required: [true, "Salon name is required"],
         trim: true
     },
-    category: {
+    salonCategory: {
         type: String,
         enum: ["Men", "Women", "Unisex"],
         required: [true, "Salon category is required"]
     },
+    phoneNumber: {
+        type: String,
+        required: [true, "Salon phone number is required"],
+        trim: true
+    },
+    email: {
+        type: String,
+        required: [true, "Salon email is required."],
+        match: [/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "plese use a valid email address"],
+    },
     description: {
         type: String,
     },
-    address: {
-        city: String,
-        area: String,
-        pincode: Number,
-        fullAddress: String
+    fullAddress: {
+        type: String,
+        required: [true, "Salon fullAddress is required."]
     },
+    country: {
+        type: String,
+        required: [true, "Salon country is required."]
+    },
+    state: {
+        type: String,
+        required: [true, "State is required."]
+    },
+    city: {
+        type: String,
+        required: [true, "city is required."]
+    },
+    area_landmark: {
+        type: String,
+        required: [true, "area_landmark is required."]
+    },
+    pincode: {
+        type: String,
+        required: [true, "pincode is required."]
+    },
+    coordinate: CoordinatesSchema,
+
+
     openingTime: {
         type: String,
         required: [true, "Opening Time is required."]
@@ -99,20 +109,18 @@ const SalonSchema = new Schema<ISalon>({
         type: String,
         required: [true, "Closing time is required."]
     },
-    workingDays: [String],
-    coverImage: {
+    weeklyAvailabity: [String],
+    salonCoverImage: {
         type: String,
     },
-    images: [String],
-    phone: {
+    salonImages: [String],
+    profilePhoto: {
         type: String,
-        required: [true, "Salon phone number is required"],
-        trim: true
     },
     services: [ServiceSchema],
-    barbers: [BarberSchema]
+    barber: [BarberSchema]
 
-}, {timestamps: true});
+}, { timestamps: true });
 
 const SalonModel = mongoose.models.Salon || mongoose.model("Salon", SalonSchema)
 

@@ -16,7 +16,7 @@ export function withAuth(handler: (req: AuthenticatedRequest, context: RouteCont
       const cookieStore = req.cookies.get("accessToken")
       const authHeader = cookieStore?.value;
 
-      console.log("Authorization Header:", authHeader);
+      // console.log("Authorization Header:", authHeader);
       //   const token = authHeader?.startsWith("Bearer ") ? authHeader.substring(7) : null
       const token = authHeader;
 
@@ -28,7 +28,7 @@ export function withAuth(handler: (req: AuthenticatedRequest, context: RouteCont
       if (!payload) {
         return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
       }
-      console.log("payload: ", payload)
+      // console.log("payload: ", payload)
       req.user = payload
       return handler(req, context)
     } catch (error) {

@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -12,8 +13,6 @@ import {
   Phone,
   Mail,
   FileText,
-  Map,
-  MapPinned
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +24,8 @@ import axios, { AxiosError } from "axios";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { SalonFormData } from "@/lib/interfaces";
+import MapCoordinates from "@/components/MapCoordinates";
+import { useRouter } from "next/navigation";
 
 const steps = [
   { id: 1, title: "Basic Info", icon: Building2 },
@@ -59,11 +60,16 @@ interface Cities {
 }
 
 const SalonRegistration = () => {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   // const [selectedDays, setSelectedDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // for Previews (UI)
   const [uploadedCoverImage, setUploadedCoverImage] = useState<string | null>(null);
-  const [category, setCategory] = useState("unisex");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  // Orignal Files for (Cloudinary upload)
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [galleryFiles, setGalleryFiles] = useState<File[]>([]);
+  const [category, setCategory] = useState("Unisex");
   const [isDragging, setIsDragging] = useState(false);
 
   const [countries, setCountries] = useState<Country[]>([]);
@@ -89,9 +95,11 @@ const SalonRegistration = () => {
     openingTime: "09:00",
     closingTime: "21:00",
     weeklyAvailabity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-    salonCoverImage: "",
-    salonImages: [],
+    // salonCoverImage: "",
+    // salonImages: [],
   });
+
+  const [formSubmitting, setFormSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     formData.salonCategory = category;
@@ -182,23 +190,46 @@ const SalonRegistration = () => {
     }));
   };
 
-  const handleCoverImageUpload = () => {
-    // Simulate image upload
-    const newCoverImage = `https://images.unsplash.com/photo-${Math.random().toString().slice(2, 12)}?w=200&h=200&fit=crop`;
-    setUploadedCoverImage(newCoverImage);
+  const handleLocationUpdate = (lat: number, lng: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      coordinate: {
+        lat: lat,
+        lon: lng,
+      },
+    }));
+  };
+
+  const handleCoverImageUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    e.preventDefault();
+    const files = 'dataTransfer' in e ? e.dataTransfer.files : e.target.files;
+    if (!files || files.length === 0) return;
+
+    const file = files[0];
+    setCoverFile(file);
+    setUploadedCoverImage(URL.createObjectURL(file));
   }
 
   const removeCoverImage = () => {
+    setCoverFile(null);
     setUploadedCoverImage(null);
   };
 
-  const handleImageUpload = () => {
-    // Simulate image upload
-    const newImage = `https://images.unsplash.com/photo-${Math.random().toString().slice(2, 12)}?w=200&h=200&fit=crop`;
-    setUploadedImages(prev => [...prev, newImage]);
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
+    e.preventDefault();
+    const files = 'dataTransfer' in e ? e.dataTransfer.files : e.target.files;
+
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      setGalleryFiles((prev) => [...prev, ...newFiles]); // Files save
+
+      const newImageUrls = newFiles.map((file) => URL.createObjectURL(file));
+      setUploadedImages((prev) => [...prev, ...newImageUrls]); // Previews
+    }
   };
 
   const removeImage = (index: number) => {
+    setGalleryFiles(prev => prev.filter((_, i) => i !== index));
     setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -215,24 +246,70 @@ const SalonRegistration = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
   };
 
-  const handleSubmit = async () => {
-    const data = { name: "pawan salon", add: "nothing" };
-    console.log(formData)
-    // try {
-    //   const response = await axios.post('/api/register-salon', data, {
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTgxMDBkMWE4MWNlZDFhZjg5NDNiYWQiLCJlbWFpbCI6Ind3dy5wYXdhbm10aGFrcmVAZ21haWwuY29tIiwicm9sZSI6ImN1c3RvbWVyIiwiaWF0IjoxNzcwNzQzODQzLCJleHAiOjE3NzEzNDg2NDN9.QTzlhzyhynVLsjPRXDnU2gq4U5eEhpO6-VZo5W0OvP0"
-    //     }
-    //   });
+  const uploadToCloudinary = async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!); // Apna preset yahan dalein
 
-    //   console.log("Response from server:", response.data);
-    //   alert("Salon registered!");
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, // Apna cloud name yahan dalein
+      { method: "POST", body: formData }
+    );
 
-    // } catch (error: any) {
-    //   // It's better to log error.response.data to see your custom error messages
-    //   console.error("Server Error:", error.response?.data || error.message);
-    // }
+    const data = await res.json();
+    return data.secure_url; // Ye permanent URL return karega
+  };
+
+  const validateForm = () => {
+    if (formData.coordinate.lat === null || formData.coordinate.lon === null) {
+      toast.error("Coordinats is required", {
+        description: "Please select the coordinats before proceeding.",
+      });
+      return false;
+    }
+    if (coverFile === null) {
+      toast.error("Cover Image is required", {
+        description: "Please upload a cover image before proceeding.",
+      });
+      return false;
+    }
+    return true;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setFormSubmitting(true)
+
+      if (!validateForm()) return;
+
+      let coverUrl = "";
+      if (coverFile) {
+        coverUrl = await uploadToCloudinary(coverFile);
+      }
+
+      const galleryUrls = await Promise.all(
+        galleryFiles.map((file) => uploadToCloudinary(file))
+      );
+
+      const finalData = {
+        ...formData,
+        salonCoverImage: coverUrl,
+        salonImages: galleryUrls
+      };
+
+      const response = await axios.post('/api/register-salon', finalData);
+
+      console.log("Response from server:", response.data);
+      toast.success("Salon registered!");
+      router.push('/owner/dashboard') 
+
+    } catch (error: any) {
+      // It's better to log error.response.data to see your custom error messages
+      console.error("Server Error:", error.response?.data || error.message);
+    } finally {
+      setFormSubmitting(false);
+    }
   };
 
   return (
@@ -313,432 +390,370 @@ const SalonRegistration = () => {
             animate="visible"
             className="space-y-8"
           >
-            {/* Section 1: Basic Information */}
-            <motion.div
-              variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 1 ? "ring-2 ring-primary/20" : ""
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Salon Basic Information
-                </h2>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="salonName">Salon Name</Label>
-                  <Input
-                    id="salonName"
-                    name="salonName"
-                    placeholder="Enter your salon name"
-                    className="h-12"
-                    onChange={handleInputChange}
-                  />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Section 1: Basic Information */}
+              <motion.div
+                variants={itemVariants}
+                className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 1 ? "ring-2 ring-primary/20" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    Salon Basic Information
+                  </h2>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Salon Category</Label>
-                  <RadioGroup
-                    value={category}
-                    onValueChange={setCategory}
-                    className="flex gap-4 pt-2"
-                  >
-                    {["men", "women", "unisex"].map((cat) => (
-                      <div key={cat} className="flex items-center">
-                        <RadioGroupItem value={cat} id={cat} />
-                        <Label htmlFor={cat} className="ml-2 capitalize cursor-pointer">
-                          {cat}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <span className="absolute left-9.5 top-5.5 -translate-y-1/2 w-4 h-4 text-muted-foreground text-sm">+91</span>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="salonName">Salon Name</Label>
                     <Input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="tel"
-                      placeholder="98765 43210"
-                      maxLength={10}
-                      className="h-12 pl-17"
+                      id="salonName"
+                      name="salonName"
+                      placeholder="Enter your salon name"
+                      className="h-12"
+                      onChange={handleInputChange}
+                      required={true}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Salon Category</Label>
+                    <RadioGroup
+                      value={category}
+                      onValueChange={setCategory}
+                      className="flex gap-4 pt-2"
+                    >
+                      {["Men", "Women", "Unisex"].map((cat) => (
+                        <div key={cat} className="flex items-center">
+                          <RadioGroupItem value={cat} id={cat} />
+                          <Label htmlFor={cat} className="ml-2 capitalize cursor-pointer">
+                            {cat}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <span className="absolute left-9.5 top-5.5 -translate-y-1/2 w-4 h-4 text-muted-foreground text-sm">+91</span>
+                      <Input
+                        id="phoneNumber"
+                        name="phoneNumber"
+                        type="tel"
+                        placeholder="98765 43210"
+                        maxLength={10}
+                        className="h-12 pl-17"
+                        onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                          const input = e.currentTarget;
+                          input.value = input.value.replace(/[^0-9]/g, '');
+                        }}
+                        onChange={handleInputChange}
+                        required={true}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="salon@example.com"
+                        className="h-12 pl-10"
+                        onChange={handleInputChange}
+                        required={true}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="description">Short Description</Label>
+                    <div className="relative">
+                      <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                      <Textarea
+                        id="description"
+                        name="description"
+                        placeholder="Describe your salon in a few words..."
+                        className="min-h-[100px] pl-10 resize-none"
+                        onChange={handleInputChange}
+                        required={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Section 2: Location Details */}
+              <motion.div
+                variants={itemVariants}
+                className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 2 ? "ring-2 ring-primary/20" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    Location Details
+                  </h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label htmlFor="fullAddress">Full Address</Label>
+                    <Input
+                      id="fullAddress"
+                      name="fullAddress"
+                      placeholder="Street address, building name, floor..."
+                      className="h-12"
+                      onChange={handleInputChange}
+                      required={true}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Select
+                      onValueChange={(value) => handleSelectChange("country", value)}
+                      disabled
+                    >
+                      <SelectTrigger className="w-full max-w-48">
+                        <SelectValue placeholder="India" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>Country</SelectLabel>
+                          {countries.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="state">State</Label>
+                    <Select
+                      onValueChange={(value) => handleSelectChange("state", value)}
+                      disabled={states.length === 0}
+                      required={true}
+                    >
+                      <SelectTrigger className="w-full max-w-48">
+                        <SelectValue placeholder="Country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>State</SelectLabel>
+                          {states.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Select
+                      onValueChange={(value) => handleSelectChange("city", value)}
+                      disabled={cities.length === 0}
+                      required={true}
+                    >
+                      <SelectTrigger className="w-full max-w-48">
+                        <SelectValue placeholder="City" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectLabel>City</SelectLabel>
+                          {cities.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="area_landmark">Area / Landmark</Label>
+                    <Input
+                      id="area_landmark"
+                      name="area_landmark"
+                      placeholder="e.g., Near Central Mall"
+                      className="h-12"
+                      onChange={handleInputChange}
+                      required={true}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="pincode">Pincode</Label>
+                    <Input
+                      id="pincode"
+                      name="pincode"
+                      type="text"
+                      placeholder="e.g., 400001"
+                      className="h-12"
+                      maxLength={6}
                       onInput={(e: React.FormEvent<HTMLInputElement>) => {
                         const input = e.currentTarget;
                         input.value = input.value.replace(/[^0-9]/g, '');
                       }}
                       onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="salon@example.com"
-                      className="h-12 pl-10"
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="description">Short Description</Label>
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-                    <Textarea
-                      id="description"
-                      name="description"
-                      placeholder="Describe your salon in a few words..."
-                      className="min-h-[100px] pl-10 resize-none"
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Section 2: Location Details */}
-            <motion.div
-              variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 2 ? "ring-2 ring-primary/20" : ""
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Location Details
-                </h2>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="fullAddress">Full Address</Label>
-                  <Input
-                    id="fullAddress"
-                    name="fullAddress"
-                    placeholder="Street address, building name, floor..."
-                    className="h-12"
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
-                  <Select
-                    onValueChange={(value) => handleSelectChange("country", value)}
-                    disabled
-                  >
-                    <SelectTrigger className="w-full max-w-48">
-                      <SelectValue placeholder="India" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>Country</SelectLabel>
-                        {countries.map((c) => (
-                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
-                  <Select
-                    onValueChange={(value) => handleSelectChange("state", value)}
-                    disabled={states.length === 0}
-                  >
-                    <SelectTrigger className="w-full max-w-48">
-                      <SelectValue placeholder="Country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>State</SelectLabel>
-                        {states.map((c) => (
-                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Select
-                    onValueChange={(value) => handleSelectChange("city", value)}
-                    disabled={cities.length === 0}
-                  >
-                    <SelectTrigger className="w-full max-w-48">
-                      <SelectValue placeholder="City" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectLabel>City</SelectLabel>
-                        {cities.map((c) => (
-                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="area_landmark">Area / Landmark</Label>
-                  <Input
-                    id="area_landmark"
-                    name="area_landmark"
-                    placeholder="e.g., Near Central Mall"
-                    className="h-12"
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="pincode">Pincode</Label>
-                  <Input
-                    id="pincode"
-                    name="pincode"
-                    type="text"
-                    placeholder="e.g., 400001"
-                    className="h-12"
-                    maxLength={6}
-                    onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                      const input = e.currentTarget;
-                      input.value = input.value.replace(/[^0-9]/g, '');
-                    }}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="getC0ordinates">Coordinates</Label>
-                  <span className="flex flex-row gap-2">
-                    <Input
-                      id="getCoordinates"
-                      placeholder="e.g., Lat, Lon"
-                      className="h-12"
-                      readOnly
-                    />
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="h-12 w-14">
-                      <Button className="h-full w-full cursor-pointer"><MapPinned /></Button>
-                    </motion.div>
-                  </span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Section 3: Working Hours */}
-            <motion.div
-              variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 3 ? "ring-2 ring-primary/20" : ""
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Clock className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Working Hours
-                </h2>
-              </div>
-
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="openTime">Opening Time</Label>
-                    <Input
-                      id="openingTime"
-                      name="openingTime"
-                      type="time"
-                      defaultValue="09:00"
-                      className="h-12"
-                      onChange={handleInputChange}
+                      required={true}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="closeTime">Closing Time</Label>
-                    <Input
-                      id="closingTime"
-                      name="closingTime"
-                      type="time"
-                      defaultValue="21:00"
-                      className="h-12"
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <Label>Weekly Availability</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {daysOfWeek.map((day) => (
-                      <motion.button
-                        key={day}
-                        type="button"
-                        onClick={() => toggleDay(day)}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${formData.weeklyAvailabity.includes(day)
-                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                          }`}
-                      >
-                        {day}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* section 4 cover img uplode */}
-            <motion.div
-              variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <ImagePlus className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Salon Cover Images
-                </h2>
-              </div>
-
-              {/* Upload Area */}
-              {uploadedCoverImage === null && <motion.div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleCoverImageUpload(); }}
-                onClick={handleCoverImageUpload}
-                whileHover={{ scale: 1.01 }}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
-                  }`}
-              >
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Drag & drop images here
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      or click to browse (JPG, PNG up to 5MB)
-                    </p>
-                  </div>
-                </div>
-              </motion.div>}
-
-              {/* Uploaded Images Preview */}
-              {uploadedCoverImage !== null && (
-                <div className="mt-6">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Uploaded Images
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="relative group aspect-square rounded-xl overflow-hidden bg-muted"
-                    >
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                        <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                      </div>
-                      <motion.button
-                        onClick={(e) => { e.stopPropagation(); removeCoverImage(); }}
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        className="absolute top-2 right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <X className="w-3 h-3" />
-                      </motion.button>
-                    </motion.div>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-
-            {/* Section 4: Salon Images */}
-            <motion.div
-              variants={itemVariants}
-              className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
-                }`}
-            >
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <ImagePlus className="w-5 h-5 text-primary" />
-                </div>
-                <h2 className="font-display text-xl font-semibold text-foreground">
-                  Salon Images
-                </h2>
-              </div>
-
-              {/* Upload Area */}
-              <motion.div
-                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImageUpload(); }}
-                onClick={handleImageUpload}
-                whileHover={{ scale: 1.01 }}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
-                  }`}
-              >
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <Upload className="w-8 h-8 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      Drag & drop images here
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      or click to browse (JPG, PNG up to 5MB)
-                    </p>
+                    <Label htmlFor="getC0ordinates">Coordinates</Label>
+                    <span className="flex flex-row gap-2">
+                      <Input
+                        id="getCoordinates"
+                        value={formData.coordinate.lat ? `${formData.coordinate.lat}, ${formData.coordinate.lon}` : `e.g. Lat, Lng`}
+                        placeholder="e.g., Lat, Lon"
+                        className="h-12"
+                        readOnly
+                      />
+                      <MapCoordinates onLocationUpdate={handleLocationUpdate} />
+                    </span>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Uploaded Images Preview */}
-              {uploadedImages.length > 0 && (
-                <div className="mt-6">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Uploaded Images ({uploadedImages.length})
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {uploadedImages.map((_, index) => (
+              {/* Section 3: Working Hours */}
+              <motion.div
+                variants={itemVariants}
+                className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 3 ? "ring-2 ring-primary/20" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    Working Hours
+                  </h2>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="openTime">Opening Time</Label>
+                      <Input
+                        id="openingTime"
+                        name="openingTime"
+                        type="time"
+                        defaultValue="09:00"
+                        className="h-12"
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="closeTime">Closing Time</Label>
+                      <Input
+                        id="closingTime"
+                        name="closingTime"
+                        type="time"
+                        defaultValue="21:00"
+                        className="h-12"
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Weekly Availability</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {daysOfWeek.map((day) => (
+                        <motion.button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleDay(day)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${formData.weeklyAvailabity.includes(day)
+                            ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            }`}
+                        >
+                          {day}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* section 4 cover img uplode */}
+              <motion.div
+                variants={itemVariants}
+                className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <ImagePlus className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    Salon Cover Images
+                  </h2>
+                </div>
+
+                {/* Upload Area */}
+                {uploadedCoverImage === null && <motion.div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => { setIsDragging(false); handleCoverImageUpload(e); }}
+                  // onClick={handleCoverImageUpload}
+                  whileHover={{ scale: 1.01 }}
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
+                    }`}
+                >
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">
+                        Drag & drop images here
+                      </p>
+                      <Input id="picture" type="file" multiple={false} onChange={handleCoverImageUpload} accept=".png, .jpg, .jpeg" />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        or click to browse (JPG, PNG up to 5MB)
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>}
+
+                {/* Uploaded Images Preview */}
+                {uploadedCoverImage !== null && (
+                  <div className="mt-6">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Uploaded Images
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <motion.div
-                        key={index}
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="relative group aspect-square rounded-xl overflow-hidden bg-muted"
                       >
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                          <ImagePlus className="w-8 h-8 text-muted-foreground" />
-                        </div>
+                        {/* <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                        <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                      </div> */}
+                        <Image src={uploadedCoverImage} height={500} width={500} alt="img" />
                         <motion.button
-                          onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                          onClick={(e) => { e.stopPropagation(); removeCoverImage(); }}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           className="absolute top-2 right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -746,36 +761,113 @@ const SalonRegistration = () => {
                           <X className="w-3 h-3" />
                         </motion.button>
                       </motion.div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </motion.div>
+                )}
+              </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div
-              variants={itemVariants}
-              className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
-            >
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto px-8 h-12 rounded-xl"
+              {/* Section 4: Salon Images */}
+              <motion.div
+                variants={itemVariants}
+                className={`bg-card rounded-2xl p-6 md:p-8 shadow-elegant border border-border ${currentStep === 4 ? "ring-2 ring-primary/20" : ""
+                  }`}
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <ImagePlus className="w-5 h-5 text-primary" />
+                  </div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">
+                    Salon Images
+                  </h2>
+                </div>
+
+                {/* Upload Area */}
+                <motion.div
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => { setIsDragging(false); handleImageUpload(e); }}
+                  // onClick={handleImageUpload}
+                  whileHover={{ scale: 1.01 }}
+                  className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300 ${isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-muted-foreground/30 hover:border-primary/50 hover:bg-muted/50"
+                    }`}
                 >
-                  Save as Draft
-                </Button>
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                      <Upload className="w-8 h-8 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">
+                        Drag & drop images here
+                      </p>
+                      <Input id="picture" type="file" multiple={true} onChange={handleImageUpload} accept=".png, .jpg, .jpeg" />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        or click to browse (JPG, PNG up to 5MB)
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Uploaded Images Preview */}
+                {uploadedImages.length > 0 && (
+                  <div className="mt-6">
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Uploaded Images ({uploadedImages.length})
+                    </p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {uploadedImages.map((_, index) => (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="relative group aspect-square rounded-xl overflow-hidden bg-muted"
+                        >
+                          {/* <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                          <ImagePlus className="w-8 h-8 text-muted-foreground" />
+                        </div> */}
+                          <Image src={_} height={500} width={500} alt="img" />
+                          <motion.button
+                            onClick={(e) => { e.stopPropagation(); removeImage(index); }}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="absolute top-2 right-2 w-6 h-6 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-3 h-3" />
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  onClick={handleSubmit}
-                  size="lg"
-                  className="w-full sm:w-auto px-8 h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                >
-                  Register Salon
-                </Button>
+
+              {/* Action Buttons */}
+              <motion.div
+                variants={itemVariants}
+                className="flex flex-col sm:flex-row gap-4 justify-center pt-4"
+              >
+                {/* <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto px-8 h-12 rounded-xl"
+                  >
+                    Save as Draft
+                  </Button>
+                </motion.div> */}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full sm:w-auto px-8 h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                    disabled={formSubmitting}
+                  >
+                    {formSubmitting === true ? "Registering..." : "Register Salon"}
+                  </Button>
+                </motion.div>
               </motion.div>
-            </motion.div>
+            </form>
           </motion.div>
         </div>
       </main>

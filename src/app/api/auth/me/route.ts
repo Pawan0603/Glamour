@@ -1,6 +1,6 @@
 import { AuthenticatedRequest, withAuth } from "@/lib/auth/middleware";
 import connectDB from "@/lib/connectDB";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 async function me(req: AuthenticatedRequest){
     await connectDB();

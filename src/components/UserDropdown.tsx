@@ -28,7 +28,9 @@ const UserDropdown = () => {
     { icon: Store, label: "Register My Salon", href: "/register-salon" },
   ];
 
-  if (user.role === "salon_owner" && user.salonId) {
+  if (user.role === "owner" ) {
+    menuItems.pop();
+
     menuItems.push({
       icon: LayoutDashboard,
       label: "Salon Dashboard",

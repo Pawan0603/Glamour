@@ -10,7 +10,7 @@ export interface User {
   email: string;
   phone: string;
   avatar?: string;
-  role: "customer" | "salon_owner";
+  role: "customer" | "owner";
   salonId?: string;
   salonName?: string;
 }

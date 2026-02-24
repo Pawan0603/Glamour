@@ -136,7 +136,7 @@ export default function Profile() {
                       className="capitalize flex items-center gap-1.5"
                     >
                       <Shield className="w-3 h-3" />
-                      {user.role === "salon_owner"
+                      {user.role === "owner"
                         ? "Salon Owner"
                         : "Customer"}
                     </Badge>
@@ -221,7 +221,7 @@ export default function Profile() {
                     </motion.div>
                   </Link>
 
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50">
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-muted/50 mt-3">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
                         <Clock className="w-4 h-4 text-accent-foreground" />
@@ -250,7 +250,7 @@ export default function Profile() {
                 </CardHeader>
 
                 <CardContent>
-                  {user.salonId ? (
+                  {user.role === "owner" ? (
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/10 gap-4">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">

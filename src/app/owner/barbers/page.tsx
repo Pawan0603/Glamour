@@ -5,7 +5,6 @@ import { Plus, Edit2, Trash2, X, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { OwnerLayout } from "@/components/owner/OwnerLayout";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -122,7 +121,6 @@ export default function Page() {
   };
 
   return (
-    <OwnerLayout>
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -290,6 +288,5 @@ export default function Page() {
           </div>
         </motion.div>
       </motion.div>
-    </OwnerLayout>
   );
 }

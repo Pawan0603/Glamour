@@ -1,4 +1,4 @@
-import mongoose, {type Document, Schema } from 'mongoose';
+import mongoose, { type Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
     name: string,
@@ -6,7 +6,8 @@ export interface IUser extends Document {
     password: string,
     role: "customer" | "owner",
     emailVerificationToken: string,
-    isEmailVerified: boolean
+    isEmailVerified: boolean,
+    salonId?: mongoose.Schema.Types.ObjectId
 }
 
 const UserSchema = new Schema<IUser>({
@@ -37,8 +38,12 @@ const UserSchema = new Schema<IUser>({
     isEmailVerified: {
         type: Boolean,
         default: true
+    },
+    salonId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Salon",
     }
-}, {timestamps: true});
+}, { timestamps: true });
 
 const UserModel = mongoose.models.User || mongoose.model("User", UserSchema)
 

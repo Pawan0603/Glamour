@@ -21,11 +21,12 @@ export async function POST(req: NextRequest) {
 
         if (!isPasswordValid) return NextResponse.json({ error: "Invalid password." }, { status: 401 });
 
-        const tokens = generateTokens({
+        const tokens =  generateTokens({
             userId: user._id.toString(),
             email: user.email,
             name: user.name,
             role: user.role,
+            ...(user.salonId && { salonId: user.salonId })
         })
 
         const userData = {
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
             avatar: user.avatar,
             role: user.role,
             isEmailVerified: user.isEmailVerified,
+            ...(user.salonId && { salonId: user.salonId })
         }
 
         const cookieStore = await cookies()

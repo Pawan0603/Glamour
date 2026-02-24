@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Edit2, Trash2, Clock, IndianRupee } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import axios, { AxiosError } from "axios";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { useSalon } from "@/lib/contexts/SalonContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -27,26 +31,28 @@ const itemVariants = {
 };
 
 interface Service {
-  id: number;
-  name: string;
+  _id: number;
+  servicesName: string;
   category: string;
   price: number;
   duration: number;
 }
 
-const initialServices: Service[] = [
-  { id: 1, name: "Haircut", category: "Hair", price: 300, duration: 30 },
-  { id: 2, name: "Beard Trim", category: "Grooming", price: 150, duration: 15 },
-  { id: 3, name: "Hair Spa", category: "Hair", price: 800, duration: 60 },
-  { id: 4, name: "Facial", category: "Skin", price: 500, duration: 45 },
-  { id: 5, name: "Hair Color", category: "Hair", price: 1200, duration: 90 },
-  { id: 6, name: "Manicure", category: "Nails", price: 400, duration: 30 },
-];
+// const initialServices: Service[] = [
+//   { id: 1, servicesName: "Haircut", category: "Hair", price: 300, duration: 30 },
+//   { id: 2, servicesName: "Beard Trim", category: "Grooming", price: 150, duration: 15 },
+//   { id: 3, servicesName: "Hair Spa", category: "Hair", price: 800, duration: 60 },
+//   { id: 4, servicesName: "Facial", category: "Skin", price: 500, duration: 45 },
+//   { id: 5, servicesName: "Hair Color", category: "Hair", price: 1200, duration: 90 },
+//   { id: 6, servicesName: "Manicure", category: "Nails", price: 400, duration: 30 },
+// ];
 
 const categories = ["Hair", "Grooming", "Skin", "Nails", "Massage", "Other"];
 
 export default function Page() {
-  const [services, setServices] = useState<Service[]>(initialServices);
+  const { user } = useAuth();
+  const { salon } = useSalon();
+  const [services, setServices] = useState<Service[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -55,26 +61,57 @@ export default function Page() {
     duration: "",
   });
 
-  const handleAddService = () => {
+  useEffect(() => {
+    console.log("type of sevices coming form db:", typeof salon?.services)
+    console.log(services)
+    if (salon?.services) {
+      setServices(salon.services); // This will now work after fixing the interface
+    }
+  }, [salon]);
+
+  const handleAddService = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!formData.name || !formData.category || !formData.price || !formData.duration) {
       return;
     }
 
-    const newService: Service = {
-      id: Date.now(),
-      name: formData.name,
+    const serviceData = {
+      servicesName: formData.name,
       category: formData.category,
-      price: parseFloat(formData.price),
-      duration: parseInt(formData.duration),
-    };
+      price: formData.price,
+      duration: formData.duration
+    }
 
-    setServices([newService, ...services]);
-    setFormData({ name: "", category: "", price: "", duration: "" });
-    setShowForm(false);
+    try {
+      const res = await axios.patch(`/api/salon/${user?.salonId}/add-service`, serviceData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      toast.success(res.data.message);
+      setServices(res.data.services);
+      setFormData({ name: "", category: "", price: "", duration: "" });
+      setShowForm(false);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "Somethin went worng.")
+    }
+
+    // const newService: Service = {
+    //   id: Date.now(),
+    //   name: formData.name,
+    //   category: formData.category,
+    //   price: parseFloat(formData.price),
+    //   duration: parseInt(formData.duration),
+    // };
+
+    // setServices([newService, ...services]);
+    // setFormData({ name: "", category: "", price: "", duration: "" });
+    // setShowForm(false);
   };
 
-  const handleDeleteService = (id: number) => {
-    setServices(services.filter((s) => s.id !== id));
+  const handleDeleteService = (_id: number) => {
+    setServices(services.filter((s) => s._id !== _id));
   };
 
   return (
@@ -113,7 +150,7 @@ export default function Page() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+            <form onSubmit={handleAddService} className="bg-card rounded-2xl border border-border p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground mb-6">
                 Add New Service
               </h2>
@@ -127,6 +164,7 @@ export default function Page() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -136,6 +174,7 @@ export default function Page() {
                     onValueChange={(value) =>
                       setFormData({ ...formData, category: value })
                     }
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -159,6 +198,7 @@ export default function Page() {
                     onChange={(e) =>
                       setFormData({ ...formData, price: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -171,16 +211,17 @@ export default function Page() {
                     onChange={(e) =>
                       setFormData({ ...formData, duration: e.target.value })
                     }
+                    required
                   />
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
-                <Button onClick={handleAddService}>Add Service</Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>
+                <Button type="submit">Add Service</Button>
+                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
               </div>
-            </div>
+            </form>
           </motion.div>
         )}
       </AnimatePresence>
@@ -191,7 +232,7 @@ export default function Page() {
           <AnimatePresence mode="popLayout">
             {services.map((service) => (
               <motion.div
-                key={service.id}
+                key={service._id}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -202,7 +243,7 @@ export default function Page() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="text-lg font-semibold text-foreground">
-                      {service.name}
+                      {service.servicesName}
                     </h3>
                     <span className="inline-block px-3 py-1 bg-primary/10 text-primary rounded-full text-xs font-medium mt-2">
                       {service.category}
@@ -219,7 +260,7 @@ export default function Page() {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDeleteService(service.id)}
+                      onClick={() => handleDeleteService(service._id)}
                       className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />

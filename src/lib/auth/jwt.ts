@@ -10,6 +10,7 @@ export interface JWTPayload {
   email: string
   name: string
   role: string
+  salonId?: string
   iat?: number
   exp?: number
 }

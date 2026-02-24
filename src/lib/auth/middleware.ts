@@ -6,7 +6,8 @@ export interface AuthenticatedRequest extends NextRequest {
 }
 
 interface RouteContext {
-  params?: Record<string, string | string[]>;
+  // params?: Record<string, string | string[]>;
+  params: Promise<{ id: string }>;
 }
 
 export function withAuth(handler: (req: AuthenticatedRequest, context: RouteContext) => Promise<NextResponse>) {
@@ -36,6 +37,15 @@ export function withAuth(handler: (req: AuthenticatedRequest, context: RouteCont
       return NextResponse.json({ error: "Authentication failed" }, { status: 401 })
     }
   }
+}
+
+export function withOwnerAuth(handler: (req: AuthenticatedRequest, context: RouteContext) => Promise<NextResponse>) {
+  return withAuth(async (req: AuthenticatedRequest, context: RouteContext): Promise<NextResponse> => {
+    if (!req.user || !["owner"].includes(req.user.role)) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 })
+    }
+    return handler(req, context)
+  })
 }
 
 export function withAdminAuth(handler: (req: AuthenticatedRequest, context: RouteContext) => Promise<NextResponse>) {

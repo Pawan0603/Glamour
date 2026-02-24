@@ -36,7 +36,7 @@ async function registerSalon(req: AuthenticatedRequest){
 
         const updatedUser = await UserModel.findByIdAndUpdate(
             user.userId, 
-            { role: "owner" },
+            { role: "owner", salonId: salon._id },
             { new: true }
         );
 

@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useSalon } from "@/lib/contexts/SalonContext";
+import { Service } from "@/lib/interfaces";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,23 +30,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
-
-interface Service {
-  _id: number;
-  servicesName: string;
-  category: string;
-  price: number;
-  duration: number;
-}
-
-// const initialServices: Service[] = [
-//   { id: 1, servicesName: "Haircut", category: "Hair", price: 300, duration: 30 },
-//   { id: 2, servicesName: "Beard Trim", category: "Grooming", price: 150, duration: 15 },
-//   { id: 3, servicesName: "Hair Spa", category: "Hair", price: 800, duration: 60 },
-//   { id: 4, servicesName: "Facial", category: "Skin", price: 500, duration: 45 },
-//   { id: 5, servicesName: "Hair Color", category: "Hair", price: 1200, duration: 90 },
-//   { id: 6, servicesName: "Manicure", category: "Nails", price: 400, duration: 30 },
-// ];
 
 const categories = ["Hair", "Grooming", "Skin", "Nails", "Massage", "Other"];
 
@@ -62,10 +46,8 @@ export default function Page() {
   });
 
   useEffect(() => {
-    console.log("type of sevices coming form db:", typeof salon?.services)
-    console.log(services)
     if (salon?.services) {
-      setServices(salon.services); // This will now work after fixing the interface
+      setServices(salon.services);
     }
   }, [salon]);
 
@@ -78,8 +60,8 @@ export default function Page() {
     const serviceData = {
       servicesName: formData.name,
       category: formData.category,
-      price: formData.price,
-      duration: formData.duration
+      price: Number(formData.price),
+      duration: Number(formData.duration)
     }
 
     try {
@@ -96,21 +78,9 @@ export default function Page() {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "Somethin went worng.")
     }
-
-    // const newService: Service = {
-    //   id: Date.now(),
-    //   name: formData.name,
-    //   category: formData.category,
-    //   price: parseFloat(formData.price),
-    //   duration: parseInt(formData.duration),
-    // };
-
-    // setServices([newService, ...services]);
-    // setFormData({ name: "", category: "", price: "", duration: "" });
-    // setShowForm(false);
   };
 
-  const handleDeleteService = (_id: number) => {
+  const handleDeleteService = (_id: string) => {
     setServices(services.filter((s) => s._id !== _id));
   };
 

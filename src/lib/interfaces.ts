@@ -6,10 +6,11 @@ export interface Coordinates {
 }
 
 export interface Service {
+  _id: string
   servicesName: string;
   category: string;
   price: number | null;
-  duration: string;
+  duration: number;
 }
 
 export interface Barber {

@@ -19,7 +19,7 @@ async function addServiceHandler(
         const { id } = await context.params;
         console.log("⛳⛳this is salon id: ",id)
         const newService: Service = await req.json();
-
+console.log("newService:",typeof newService.duration)
         const salon = await SalonModel.findById(id);
 
         if (!salon) NextResponse.json({ error: "Salon not found." }, { status: 404 });

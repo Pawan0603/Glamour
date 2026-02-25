@@ -16,7 +16,7 @@ const ServiceSchema = new Schema<Service>({
         required: [true, "service price is required."]
     },
     duration: {
-        type: String,
+        type: Number,
         required: [true, "service duration is required."]
     }
 })

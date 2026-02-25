@@ -18,10 +18,21 @@ async function addServiceHandler(
     try {
         const { id } = await context.params;
         const newService: Service = await req.json();
-        
+
         const salon = await SalonModel.findById(id);
 
         if (!salon) NextResponse.json({ error: "Salon not found." }, { status: 404 });
+
+        const isDuplicate = salon.services.some(
+            (s: Service) => s.servicesName.toLowerCase() === newService.servicesName.toLowerCase()
+        );
+
+        if (isDuplicate) {
+            return NextResponse.json(
+                { error: "A service with this name already exists in your salon." },
+                { status: 400 }
+            );
+        }
 
         if (salon.ownerId.toString() !== req.user?.userId.toString()) {
             return NextResponse.json(

@@ -9,6 +9,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
+  if (!cookies && (request.nextUrl.pathname.startsWith('/owner'))){
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   if(token){
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);

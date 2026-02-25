@@ -17,6 +17,7 @@ import axios, { AxiosError } from "axios";
 import { useAuth } from "@/lib/contexts/AuthContext";
 import { useSalon } from "@/lib/contexts/SalonContext";
 import { Service } from "@/lib/interfaces";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -76,12 +77,24 @@ export default function Page() {
       setShowForm(false);
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
-      toast.error(error.response?.data.error || "Somethin went worng.")
+      toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
     }
   };
 
-  const handleDeleteService = (_id: string) => {
-    setServices(services.filter((s) => s._id !== _id));
+  const handleDeleteService = async (serviceId: string) => {
+    // setServices(services.filter((s) => s._id !== _id));
+    try {
+      const response = await axios.delete(`/api/salon/${user?.salonId}/delete-service`, {
+        params: {
+          serviceId: serviceId
+        },
+      })
+      toast.success(response.data.message);
+      setServices(response.data.services);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>;
+      toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
+    }
   };
 
   return (
@@ -227,14 +240,35 @@ export default function Page() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDeleteService(service._id)}
-                      className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </motion.button>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          // onClick={() => handleDeleteService(service._id)}
+                          className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Are you absolutely sure?</DialogTitle>
+                          <DialogDescription>
+                            This action cannot be undone. This will permanently delete your service
+                            and remove your data from our servers.
+                          </DialogDescription>
+                          <div className="sm:justify-start space-x-2">
+                            <DialogClose asChild>
+                              <Button type="button" className="cursor-pointer" onClick={() => handleDeleteService(service._id)}>Delete</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button variant={'outline'} type="button" className="cursor-pointer">Close</Button>
+                            </DialogClose>
+                          </div>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
                 <div className="flex items-center gap-6 text-sm">

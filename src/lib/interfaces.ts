@@ -22,7 +22,7 @@ export interface Barber {
   barberName: string;
   experience: number | null;
   services: string[]; // Usually an array of strings representing service names or IDs
-  avatar: string;
+  avatar: IAvatar;
 }
 
 export interface SalonFormData {

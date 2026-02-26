@@ -49,13 +49,13 @@ async function addServiceHandler(
             }
         );
 
-        return NextResponse.json({ message: "Service added successfully.", services: updatedSalon.services }, { status: 200 });
+        return NextResponse.json({ message: "Service added successfully.", barber: updatedSalon.barber }, { status: 200 });
 
     } catch (error: unknown) {
+        console.log(error)
         if (error instanceof Error) {
             return NextResponse.json({ error: error.message }, { status: 500 });
         }
-
         return NextResponse.json({ error: "An unknown error occurred" }, { status: 500 });
     }
 }

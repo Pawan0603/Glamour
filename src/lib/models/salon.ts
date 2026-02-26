@@ -1,5 +1,16 @@
 import mongoose, { Schema } from "mongoose";
-import { Salon, Coordinates, Barber, Service } from "../interfaces";
+import { Salon, Coordinates, Barber, Service, IAvatar } from "../interfaces";
+
+const avatarSchema = new Schema<IAvatar>({
+    url: {
+        type: String,
+        required: [true, "Avatr url is required."],
+    },
+    publicId: {
+        type: String,
+        required: [true, "Avatr publicId is required."],
+    },
+})
 
 const ServiceSchema = new Schema<Service>({
     servicesName: {
@@ -32,9 +43,7 @@ const BarberSchema = new Schema<Barber>({
         default: 0,
     },
     services: [String],
-    avatar: {
-        type: String
-    }
+    avatar: avatarSchema,
 })
 
 const CoordinatesSchema = new Schema<Coordinates>({

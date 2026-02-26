@@ -5,9 +5,13 @@ import { Plus, Edit2, Trash2, X, Briefcase, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import CircularProgressBar from "@/components/ProgressBar/CircularProgressBar";
 import ImageUploadCard from "@/components/ImageUploadCard";
 import { IAvatar } from "@/lib/interfaces";
+import { useAuth } from "@/lib/contexts/AuthContext";
+import { useSalon } from "@/lib/contexts/SalonContext";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import Image from "next/image";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -75,6 +79,8 @@ const initialBarbers: Barber[] = [
 ];
 
 export default function Page() {
+  const { user } = useAuth();
+  const { salon, setSalon } = useSalon();
   const [barbers, setBarbers] = useState<Barber[]>(initialBarbers);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -87,26 +93,43 @@ export default function Page() {
     publicId: "",
   });
 
-  const handleAddBarber = () => {
-    if (!formData.name || !formData.experience || formData.services.length === 0) {
+  const handleAddBarber = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.experience || formData.services.length === 0 || avatar.publicId === "" || avatar.url === "") {
       return;
     }
 
-    const newBarber: Barber = {
-      id: Date.now(),
-      name: formData.name,
-      experience: parseInt(formData.experience),
+    const barberData = {
+      barberName: formData.name,
+      experience: Number(formData.experience),
       services: formData.services,
-      avatar: formData.name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase(),
-    };
+      avatar: avatar
+    }
 
-    setBarbers([newBarber, ...barbers]);
-    setFormData({ name: "", experience: "", services: [] });
-    setShowForm(false);
+    console.log(barberData)
+
+    try {
+      const res = await axios.patch(`/api/salon/${user?.salonId}/add-barber`, barberData, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+      toast.success(res.data.message);
+      // setSalon({ ...salon, barber: res.data.barber })
+      if (!salon?.ownerId) return;
+      setSalon({
+        ...salon,
+        barber: res.data.barber,
+        ownerId: salon.ownerId
+      });
+      setFormData({ name: "", experience: "", services: [] });
+      setAvatar({ url: "", publicId: "" });
+      setShowForm(false);
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
+      console.log(error.response?.data.error)
+    }
   };
 
   const handleDeleteBarber = (id: number) => {
@@ -168,7 +191,7 @@ export default function Page() {
                 Add New Barber
               </h2>
 
-              <ImageUploadCard setAvatar={setAvatar}/>
+              <ImageUploadCard setAvatar={setAvatar} />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div className="space-y-2">
@@ -199,19 +222,19 @@ export default function Page() {
               <div className="space-y-3">
                 <Label>Assign Services</Label>
                 <div className="flex flex-wrap gap-2">
-                  {availableServices.map((service) => (
+                  {salon?.services.map((service) => (
                     <motion.button
-                      key={service}
-                      onClick={() => toggleService(service)}
+                      key={service.servicesName}
+                      onClick={() => toggleService(service.servicesName)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${formData.services.includes(service)
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${formData.services.includes(service.servicesName)
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                     >
-                      {service}
-                      {formData.services.includes(service) && (
+                      {service.servicesName}
+                      {formData.services.includes(service.servicesName) && (
                         <X className="w-3 h-3 ml-2 inline" />
                       )}
                     </motion.button>
@@ -234,9 +257,9 @@ export default function Page() {
       <motion.div variants={itemVariants}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
-            {barbers.map((barber) => (
+            {salon?.barber.map((barber) => (
               <motion.div
-                key={barber.id}
+                key={barber._id}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -246,12 +269,12 @@ export default function Page() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-bold text-lg">
-                      {barber.avatar}
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
+                    <Image src={barber.avatar.url} width={150} height={150} alt="avatar" className="w-full h-full object-cover"/>
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
-                        {barber.name}
+                        {barber.barberName}
                       </h3>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
                         <Briefcase className="w-4 h-4" />

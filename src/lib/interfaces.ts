@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+export interface IAvatar {
+  url: string,
+  publicId: string
+}
+
 export interface Coordinates {
   lat: number | null;
   lon: number | null;
@@ -17,6 +22,7 @@ export interface Barber {
   barberName: string;
   experience: number | null;
   services: string[]; // Usually an array of strings representing service names or IDs
+  avatar: string;
 }
 
 export interface SalonFormData {

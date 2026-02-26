@@ -31,7 +31,10 @@ const BarberSchema = new Schema<Barber>({
         type: Number,
         default: 0,
     },
-    services: [String]
+    services: [String],
+    avatar: {
+        type: String
+    }
 })
 
 const CoordinatesSchema = new Schema<Coordinates>({

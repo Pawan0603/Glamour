@@ -12,6 +12,7 @@ import { useSalon } from "@/lib/contexts/SalonContext";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import Image from "next/image";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -81,7 +82,7 @@ const initialBarbers: Barber[] = [
 export default function Page() {
   const { user } = useAuth();
   const { salon, setSalon } = useSalon();
-  const [barbers, setBarbers] = useState<Barber[]>(initialBarbers);
+  // const [barbers, setBarbers] = useState<Barber[]>(initialBarbers);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -95,7 +96,15 @@ export default function Page() {
 
   const handleAddBarber = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.experience || formData.services.length === 0 || avatar.publicId === "" || avatar.url === "") {
+    if (!formData.name || !formData.experience) return;
+
+    if(formData.services.length === 0) {
+      toast.warning("Please assign at list 1 services.");
+      return;
+    }
+
+    if(avatar.publicId === "" || avatar.url === ""){
+      toast.warning("Please upload barber image.");
       return;
     }
 
@@ -128,12 +137,27 @@ export default function Page() {
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
-      console.log(error.response?.data.error)
     }
   };
 
-  const handleDeleteBarber = (id: number) => {
-    setBarbers(barbers.filter((b) => b.id !== id));
+  const handleDeleteBarber = async (barberId: string) => {
+    try {
+      const res = await axios.delete(`/api/salon/${user?.salonId}/delete-barber`, {
+        params: {
+          barberId: barberId
+        },
+      })
+      toast.success(res.data.message);
+      if (!salon?.ownerId) return;
+      setSalon({
+        ...salon,
+        barber: res.data.barber,
+        ownerId: salon.ownerId
+      });
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>;
+      toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
+    }
   };
 
   const toggleService = (service: string) => {
@@ -186,7 +210,7 @@ export default function Page() {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
+            <form onSubmit={handleAddBarber} className="bg-card rounded-2xl border border-border p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-foreground mb-6">
                 Add New Barber
               </h2>
@@ -203,6 +227,7 @@ export default function Page() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -215,6 +240,7 @@ export default function Page() {
                     onChange={(e) =>
                       setFormData({ ...formData, experience: e.target.value })
                     }
+                    required
                   />
                 </div>
               </div>
@@ -243,12 +269,12 @@ export default function Page() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <Button onClick={handleAddBarber}>Add Barber</Button>
+                <Button type="submit">Add Barber</Button>
                 <Button variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
               </div>
-            </div>
+            </form>
           </motion.div>
         )}
       </AnimatePresence>
@@ -270,7 +296,7 @@ export default function Page() {
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center text-primary-foreground font-bold text-lg overflow-hidden">
-                    <Image src={barber.avatar.url} width={150} height={150} alt="avatar" className="w-full h-full object-cover"/>
+                      <Image src={barber.avatar.url} width={150} height={150} alt="avatar" className="w-full h-full object-cover" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">
@@ -290,14 +316,35 @@ export default function Page() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </motion.button>
-                    <motion.button
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDeleteBarber(barber.id)}
                       className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </motion.button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Are you absolutely sure?</DialogTitle>
+                          <DialogDescription>
+                            This action cannot be undone. This will permanently delete your barber
+                            and remove your data from our servers.
+                          </DialogDescription>
+                          <div className="sm:justify-start space-x-2">
+                            <DialogClose asChild>
+                              <Button type="button" className="cursor-pointer" onClick={() =>  handleDeleteBarber(barber._id)}>Delete</Button>
+                            </DialogClose>
+                            <DialogClose asChild>
+                              <Button variant={'outline'} type="button" className="cursor-pointer">Close</Button>
+                            </DialogClose>
+                          </div>
+                        </DialogHeader>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 

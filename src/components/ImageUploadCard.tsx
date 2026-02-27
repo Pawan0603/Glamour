@@ -108,6 +108,7 @@ const ImageUploadCard: React.FC<ImageUploadCardProps> = ({
           className="hidden"
         />
         <motion.button
+          type='button'
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleButtonClick}

@@ -19,6 +19,7 @@ export interface Service {
 }
 
 export interface Barber {
+  _id: string;
   barberName: string;
   experience: number | null;
   services: string[]; // Usually an array of strings representing service names or IDs

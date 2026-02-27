@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { SalonFormData } from "@/lib/interfaces";
 import MapCoordinates from "@/components/MapCoordinates";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 const steps = [
   { id: 1, title: "Basic Info", icon: Building2 },
@@ -61,6 +62,7 @@ interface Cities {
 
 const SalonRegistration = () => {
   const router = useRouter();
+  const { refreshToken } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   // const [selectedDays, setSelectedDays] = useState<string[]>(["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
   // for Previews (UI)
@@ -312,8 +314,9 @@ const SalonRegistration = () => {
 
       const response = await axios.post('/api/register-salon', finalData);
 
-      console.log("Response from server:", response.data);
+      // console.log("Response from server:", response.data);
       toast.success("Salon registered!");
+      refreshToken();
       router.push('/owner/dashboard')
 
     } catch (err) {

@@ -1,8 +1,9 @@
 "use client";
 
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { deleteCookie } from "../deleteCookie";
+import { toast } from "sonner";
 
 export interface User {
   id: string;
@@ -23,6 +24,7 @@ interface AuthContextType {
   updateProfile: (
     data: Partial<Pick<User, "name" | "email" | "phone">>
   ) => void;
+  refreshToken: () => void;
 }
 
 // const mockUser: User = {
@@ -69,6 +71,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     validateToken();
   }, []);
 
+  const refreshToken = async () => {
+    try {
+      await axios.post('/api/auth/refreshAccessToken');
+      toast.success("Access Token refreshed.")
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>
+      toast.error(err.response?.data.error || "Somethin went worng.")
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -77,6 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         updateProfile,
+        refreshToken,
       }}
     >
       {children}

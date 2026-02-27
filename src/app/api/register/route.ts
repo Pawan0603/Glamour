@@ -34,12 +34,13 @@ export async function POST(req: NextRequest) {
     const tokens = generateTokens({
       userId: user._id.toString(),
       email: user.email,
+      name: user.name,
       role: user.role,
     })
 
     // Return user data and tokens
     const userData = {
-      id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       avatar: user.avatar,

@@ -54,8 +54,10 @@ export interface SalonFormData {
 }
 
 export interface Salon extends SalonFormData {
+  _id: string;
   ownerId: mongoose.Schema.Types.ObjectId;
   profilePhoto: string;
   services: Service[]; 
   barber: Barber[];
+  rating: number;
 }

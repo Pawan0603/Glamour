@@ -251,6 +251,7 @@ export default function Page() {
                   {salon?.services.map((service) => (
                     <motion.button
                       key={service.servicesName}
+                      type="button"
                       onClick={() => toggleService(service.servicesName)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}

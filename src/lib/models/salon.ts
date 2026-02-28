@@ -130,9 +130,28 @@ const SalonSchema = new Schema<Salon>({
         type: String,
     },
     services: [ServiceSchema],
-    barber: [BarberSchema]
+    barber: [BarberSchema],
+    rating: {
+        type: Number,
+        default: 3.3,
+    }
 
 }, { timestamps: true });
+
+SalonSchema.index({
+    salonName: 'text',
+    city: 'text',
+    state: 'text',
+    fullAddress: 'text',
+    "services.servicesName": 'text'
+}, {
+    weights: {
+        salonName: 10,
+        "services.servicesName": 5,
+        city: 3
+    },
+    name: "SalonSearchIndex"
+});
 
 const SalonModel = mongoose.models.Salon || mongoose.model("Salon", SalonSchema)
 

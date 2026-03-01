@@ -1,7 +1,7 @@
 'use client';
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { MapPin, Star, Clock, Phone, Mail, ChevronRight } from "lucide-react";
+import { MapPin, Star, Clock, Phone, Mail, ChevronRight, ClipboardClock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
@@ -12,153 +12,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
-
-// const mockSalonData = {
-//   id: "1",
-//   name: "Elite Cuts Studio",
-//   image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200",
-//   gallery: [
-//     "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
-//     "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400",
-//     "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=400",
-//     "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=400",
-//   ],
-//   location: "123, 5th Cross, Koramangala, Bangalore - 560034",
-//   description: "Elite Cuts Studio is a premium unisex salon offering cutting-edge styles and luxurious treatments. Our team of expert stylists brings years of experience and passion for creating the perfect look for every client. We use only the finest products and stay updated with the latest trends in hair and beauty.",
-//   rating: 4.8,
-//   reviewCount: 256,
-//   category: "Unisex",
-//   phone: "+91 98765 43210",
-//   email: "hello@elitecuts.com",
-//   openingHours: "10:00 AM - 9:00 PM",
-//   services: [
-//     { name: "Haircut & Styling", price: 500, duration: 45 },
-//     { name: "Hair Coloring", price: 1500, duration: 90 },
-//     { name: "Keratin Treatment", price: 3500, duration: 120 },
-//     { name: "Beard Trim", price: 200, duration: 20 },
-//     { name: "Facial", price: 800, duration: 60 },
-//     { name: "Head Massage", price: 300, duration: 30 },
-//   ],
-//   barbers: [
-//     {
-//       name: "Rahul Sharma",
-//       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-//       experience: 8,
-//       services: ["Haircut", "Styling", "Beard Trim", "Coloring"],
-//     },
-//     {
-//       name: "Priya Patel",
-//       image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-//       experience: 6,
-//       services: ["Hair Coloring", "Keratin", "Facial", "Makeup"],
-//     },
-//     {
-//       name: "Arjun Kumar",
-//       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-//       experience: 5,
-//       services: ["Haircut", "Beard Trim", "Head Massage"],
-//     },
-//   ],
-// };
-
-const mockSalonData = {
-  _id: "69a1f2c875da66b0747bb88c",
-  ownerId: "69a1ee7675da66b0747bb880",
-
-  salonName: "aman slaon",
-  salonCategory: "Unisex",
-  phoneNumber: "9999999999",
-  email: "aman@gmail.com",
-  description: "jkhkjhkjk",
-
-  fullAddress: "ghjdlkflks",
-  country: "India",
-  state: "Maharashtra",
-  city: "Chandrapur",
-  area_landmark: "khgghjh",
-  pincode: "123456",
-
-  coordinate: {
-    lat: 28.591153980424714,
-    lon: 77.19303131103516,
-  },
-
-  openingTime: "09:00",
-  closingTime: "21:00",
-  weeklyAvailabity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
-
-  salonCoverImage:
-    "https://res.cloudinary.com/dvjafsin1/image/upload/v1772221127/b7tk5xfzhd0ghgnb2f0w.jpg",
-
-  salonImages: [
-    "https://res.cloudinary.com/dvjafsin1/image/upload/v1772221128/ssifg8nc418q2cheapbd.jpg",
-  ],
-
-  services: [
-    {
-      _id: "69a2deb6ab89958a4cacf59d",
-      servicesName: "Haircut",
-      category: "Hair",
-      price: 100,
-      duration: 30,
-    },
-    {
-      _id: "69a2deceab89958a4cacf5a2",
-      servicesName: "Hair color",
-      category: "Hair",
-      price: 150,
-      duration: 50,
-    },
-  ],
-
-  barber: [
-    {
-      _id: "69a2df5dab89958a4cacf5ac",
-      barberName: "Ashwin Wadaskar",
-      experience: 2,
-      services: ["Haircut"],
-      avatar: {
-        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281674/yk5ibzhk832doun2vcob.jpg",
-        publicId: "yk5ibzhk832doun2vcob",
-      },
-    },
-    {
-      _id: "69a2e054ab89958a4cacf5be",
-      barberName: "Nd wale",
-      experience: 3,
-      services: ["Hair color"],
-      avatar: {
-        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281925/rjweyhejyw5ivh4r7mjk.jpg",
-        publicId: "rjweyhejyw5ivh4r7mjk",
-      },
-    },
-    {
-      _id: "69a2e078ab89958a4cacf5ca",
-      barberName: "asd asa",
-      experience: 6,
-      services: ["Haircut"],
-      avatar: {
-        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281967/kjp1nm7o22emrqk5nxyn.jpg",
-        publicId: "kjp1nm7o22emrqk5nxyn",
-      },
-    },
-    {
-      _id: "69a2e299ab89958a4cacf602",
-      barberName: "asd asadd",
-      experience: 2,
-      services: ["Haircut", "Hair color"],
-      avatar: {
-        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772282497/qj9xqukn5dxlk3cqfblu.jpg",
-        publicId: "qj9xqukn5dxlk3cqfblu",
-      },
-    },
-  ],
-
-  rating: 5.5,
-
-  createdAt: "2026-02-27T19:38:48.480Z",
-  updatedAt: "2026-02-28T12:42:01.803Z",
-};
+import { Salon, Service } from "@/lib/interfaces";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -180,16 +34,17 @@ type Props = {
 export default function Page({ params }: Props) {
   const { slug } = use(params);
   const router = useRouter();
-  const [salon, setSalon] = useState(mockSalonData);
+  const [salon, setSalon] = useState<Salon>();
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
 
-  if(!slug) router.push('/');
+  if (!slug) router.push('/');
 
   const fetchSalon = async () => {
     try {
       const res = await axios.get(`/api/salon/${slug}/get-salon`);
       setSalon(res.data.data);
     } catch (error) {
-      const err = error as AxiosError<{error: string}>;
+      const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "⚠️ Somthing went worng!")
     }
   }
@@ -198,10 +53,31 @@ export default function Page({ params }: Props) {
     fetchSalon();
   }, []);
 
+  // function handleSelectService(id: string) {
+  //   const service = salon?.services.find(s => s._id === id);
+  //   if (!service) return;
+
+  //   setSelectedServices(prev => [...prev, service]);
+  // }
+
+  // const removeService = (_id: string) => {
+
+  // }
+
+  function toggleService(id: string) {
+    setSelectedServices(prev => {
+      const exists = prev.some(s => s._id === id);
+      if (exists) return prev.filter(s => s._id !== id);
+
+      const service = salon?.services.find(s => s._id === id);
+      return service ? [...prev, service] : prev;
+    });
+  }
+
+  if (!salon) return;
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-
       {/* Hero Banner */}
       <section className="relative h-[40vh] md:h-[50vh] overflow-hidden">
         <motion.img
@@ -266,7 +142,7 @@ export default function Page({ params }: Props) {
                 transition={{ duration: 0.5 }}
               >
                 <h2 className="text-2xl font-display font-semibold text-foreground mb-4">Gallery</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {salon.salonImages && <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {salon.salonImages.map((img, index) => (
                     <motion.div
                       key={index}
@@ -276,7 +152,7 @@ export default function Page({ params }: Props) {
                       <img src={img} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
                     </motion.div>
                   ))}
-                </div>
+                </div>}
               </motion.div>
 
               {/* Services Section */}
@@ -290,7 +166,7 @@ export default function Page({ params }: Props) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {salon.services.map((service, index) => (
                     <motion.div key={index} variants={itemVariants}>
-                      <ServiceCard {...service} onBook={() => console.log(`Booking ${service.servicesName}`)} />
+                      <ServiceCard {...service} onBook={toggleService} isSelected={selectedServices.some(s => s._id === service._id)} />
                     </motion.div>
                   ))}
                 </div>
@@ -325,10 +201,30 @@ export default function Page({ params }: Props) {
                 {/* Booking Card */}
                 <div className="bg-card border border-border rounded-2xl p-6 shadow-card">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Book an Appointment</h3>
-                  <Button className="w-full mb-3" size="lg">
-                    Book Appointment
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  {selectedServices.length > 0 && <div className="space-y-4 mb-4">
+                    {selectedServices.map((service, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <ClipboardClock className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground">{service.servicesName}</p>
+                            <p className="text-sm text-muted-foreground">{`₹ ${service.price}`}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => toggleService(service._id)} className="cursor-pointer">
+                          <X className="w-5 h-5 text-primary" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>}
+                  <Link href={`/book-appointment?salonId=${salon._id}&serviceIds=${selectedServices.map(s => s._id).join(",")}`}>
+                    <Button className="w-full mb-3" size="lg">
+                      Book Appointment
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                   <p className="text-center text-sm text-muted-foreground">
                     Choose your service and preferred time
                   </p>
@@ -405,11 +301,11 @@ export default function Page({ params }: Props) {
               </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </div >
+      </section >
 
       <Footer />
-    </div>
+    </div >
   );
 };
 

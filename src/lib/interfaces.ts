@@ -14,14 +14,14 @@ export interface Service {
   _id: string
   servicesName: string;
   category: string;
-  price: number | null;
+  price: number;
   duration: number;
 }
 
 export interface Barber {
   _id: string;
   barberName: string;
-  experience: number | null;
+  experience: number;
   services: string[]; // Usually an array of strings representing service names or IDs
   avatar: IAvatar;
 }

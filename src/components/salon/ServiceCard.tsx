@@ -8,16 +8,11 @@ interface ServiceCardProps {
   category: string
   price: number;
   duration: number;
-  onBook?: () => void;
+  onBook?: (_id: string) => void;
+  isSelected: boolean
 }
 
-// _id: "69a2deb6ab89958a4cacf59d",
-//       servicesName: "Haircut",
-//       category: "Hair",
-//       price: 100,
-//       duration: 30,
-
-const ServiceCard = ({ _id ,servicesName, category, price, duration, onBook }: ServiceCardProps) => {
+const ServiceCard = ({ _id ,servicesName, category, price, duration, onBook, isSelected }: ServiceCardProps) => {
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -37,13 +32,20 @@ const ServiceCard = ({ _id ,servicesName, category, price, duration, onBook }: S
         <span>{duration} mins</span>
       </div>
       
-      <Button 
-        onClick={onBook} 
+      {isSelected ? <Button 
+        onClick={()=> {onBook?.(_id)}} 
         size="sm" 
         className="w-full"
       >
-        Book Appointment
-      </Button>
+        Selected
+      </Button> : <Button 
+        onClick={()=> {onBook?.(_id)}} 
+        size="sm" 
+        className="w-full"
+        variant={"outline"}
+      >
+        Select
+      </Button>}
     </motion.div>
   );
 };

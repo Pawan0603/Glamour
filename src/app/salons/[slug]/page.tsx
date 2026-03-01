@@ -1,5 +1,5 @@
 'use client';
-// import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { MapPin, Star, Clock, Phone, Mail, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,53 +9,155 @@ import Footer from "@/components/Footer";
 import ServiceCard from '@/components/salon/ServiceCard';
 import BarberCard from '@/components/salon/BarberCard';
 import Link from "next/link";
+import { use, useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+
+// const mockSalonData = {
+//   id: "1",
+//   name: "Elite Cuts Studio",
+//   image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200",
+//   gallery: [
+//     "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
+//     "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400",
+//     "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=400",
+//     "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=400",
+//   ],
+//   location: "123, 5th Cross, Koramangala, Bangalore - 560034",
+//   description: "Elite Cuts Studio is a premium unisex salon offering cutting-edge styles and luxurious treatments. Our team of expert stylists brings years of experience and passion for creating the perfect look for every client. We use only the finest products and stay updated with the latest trends in hair and beauty.",
+//   rating: 4.8,
+//   reviewCount: 256,
+//   category: "Unisex",
+//   phone: "+91 98765 43210",
+//   email: "hello@elitecuts.com",
+//   openingHours: "10:00 AM - 9:00 PM",
+//   services: [
+//     { name: "Haircut & Styling", price: 500, duration: 45 },
+//     { name: "Hair Coloring", price: 1500, duration: 90 },
+//     { name: "Keratin Treatment", price: 3500, duration: 120 },
+//     { name: "Beard Trim", price: 200, duration: 20 },
+//     { name: "Facial", price: 800, duration: 60 },
+//     { name: "Head Massage", price: 300, duration: 30 },
+//   ],
+//   barbers: [
+//     {
+//       name: "Rahul Sharma",
+//       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
+//       experience: 8,
+//       services: ["Haircut", "Styling", "Beard Trim", "Coloring"],
+//     },
+//     {
+//       name: "Priya Patel",
+//       image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+//       experience: 6,
+//       services: ["Hair Coloring", "Keratin", "Facial", "Makeup"],
+//     },
+//     {
+//       name: "Arjun Kumar",
+//       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
+//       experience: 5,
+//       services: ["Haircut", "Beard Trim", "Head Massage"],
+//     },
+//   ],
+// };
 
 const mockSalonData = {
-  id: "1",
-  name: "Elite Cuts Studio",
-  image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=1200",
-  gallery: [
-    "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400",
-    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400",
-    "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=400",
-    "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=400",
+  _id: "69a1f2c875da66b0747bb88c",
+  ownerId: "69a1ee7675da66b0747bb880",
+
+  salonName: "aman slaon",
+  salonCategory: "Unisex",
+  phoneNumber: "9999999999",
+  email: "aman@gmail.com",
+  description: "jkhkjhkjk",
+
+  fullAddress: "ghjdlkflks",
+  country: "India",
+  state: "Maharashtra",
+  city: "Chandrapur",
+  area_landmark: "khgghjh",
+  pincode: "123456",
+
+  coordinate: {
+    lat: 28.591153980424714,
+    lon: 77.19303131103516,
+  },
+
+  openingTime: "09:00",
+  closingTime: "21:00",
+  weeklyAvailabity: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+
+  salonCoverImage:
+    "https://res.cloudinary.com/dvjafsin1/image/upload/v1772221127/b7tk5xfzhd0ghgnb2f0w.jpg",
+
+  salonImages: [
+    "https://res.cloudinary.com/dvjafsin1/image/upload/v1772221128/ssifg8nc418q2cheapbd.jpg",
   ],
-  location: "123, 5th Cross, Koramangala, Bangalore - 560034",
-  description: "Elite Cuts Studio is a premium unisex salon offering cutting-edge styles and luxurious treatments. Our team of expert stylists brings years of experience and passion for creating the perfect look for every client. We use only the finest products and stay updated with the latest trends in hair and beauty.",
-  rating: 4.8,
-  reviewCount: 256,
-  category: "Unisex",
-  phone: "+91 98765 43210",
-  email: "hello@elitecuts.com",
-  openingHours: "10:00 AM - 9:00 PM",
+
   services: [
-    { name: "Haircut & Styling", price: 500, duration: 45 },
-    { name: "Hair Coloring", price: 1500, duration: 90 },
-    { name: "Keratin Treatment", price: 3500, duration: 120 },
-    { name: "Beard Trim", price: 200, duration: 20 },
-    { name: "Facial", price: 800, duration: 60 },
-    { name: "Head Massage", price: 300, duration: 30 },
-  ],
-  barbers: [
     {
-      name: "Rahul Sharma",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-      experience: 8,
-      services: ["Haircut", "Styling", "Beard Trim", "Coloring"],
+      _id: "69a2deb6ab89958a4cacf59d",
+      servicesName: "Haircut",
+      category: "Hair",
+      price: 100,
+      duration: 30,
     },
     {
-      name: "Priya Patel",
-      image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
+      _id: "69a2deceab89958a4cacf5a2",
+      servicesName: "Hair color",
+      category: "Hair",
+      price: 150,
+      duration: 50,
+    },
+  ],
+
+  barber: [
+    {
+      _id: "69a2df5dab89958a4cacf5ac",
+      barberName: "Ashwin Wadaskar",
+      experience: 2,
+      services: ["Haircut"],
+      avatar: {
+        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281674/yk5ibzhk832doun2vcob.jpg",
+        publicId: "yk5ibzhk832doun2vcob",
+      },
+    },
+    {
+      _id: "69a2e054ab89958a4cacf5be",
+      barberName: "Nd wale",
+      experience: 3,
+      services: ["Hair color"],
+      avatar: {
+        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281925/rjweyhejyw5ivh4r7mjk.jpg",
+        publicId: "rjweyhejyw5ivh4r7mjk",
+      },
+    },
+    {
+      _id: "69a2e078ab89958a4cacf5ca",
+      barberName: "asd asa",
       experience: 6,
-      services: ["Hair Coloring", "Keratin", "Facial", "Makeup"],
+      services: ["Haircut"],
+      avatar: {
+        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772281967/kjp1nm7o22emrqk5nxyn.jpg",
+        publicId: "kjp1nm7o22emrqk5nxyn",
+      },
     },
     {
-      name: "Arjun Kumar",
-      image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-      experience: 5,
-      services: ["Haircut", "Beard Trim", "Head Massage"],
+      _id: "69a2e299ab89958a4cacf602",
+      barberName: "asd asadd",
+      experience: 2,
+      services: ["Haircut", "Hair color"],
+      avatar: {
+        url: "https://res.cloudinary.com/dvjafsin1/image/upload/v1772282497/qj9xqukn5dxlk3cqfblu.jpg",
+        publicId: "qj9xqukn5dxlk3cqfblu",
+      },
     },
   ],
+
+  rating: 5.5,
+
+  createdAt: "2026-02-27T19:38:48.480Z",
+  updatedAt: "2026-02-28T12:42:01.803Z",
 };
 
 const containerVariants = {
@@ -71,9 +173,30 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-export default function Page() {
-  // const { id } = useParams();
-  const salon = mockSalonData; // In real app, fetch based on id
+type Props = {
+  params: Promise<{ slug: string }>;
+};
+
+export default function Page({ params }: Props) {
+  const { slug } = use(params);
+  const router = useRouter();
+  const [salon, setSalon] = useState(mockSalonData);
+
+  if(!slug) router.push('/');
+
+  const fetchSalon = async () => {
+    try {
+      const res = await axios.get(`/api/salon/${slug}/get-salon`);
+      setSalon(res.data.data);
+    } catch (error) {
+      const err = error as AxiosError<{error: string}>;
+      toast.error(err.response?.data.error || "⚠️ Somthing went worng!")
+    }
+  }
+
+  useEffect(() => {
+    fetchSalon();
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -85,8 +208,8 @@ export default function Page() {
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.8 }}
-          src={salon.image}
-          alt={salon.name}
+          src={salon.salonCoverImage}
+          alt={salon.salonName}
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
@@ -98,19 +221,19 @@ export default function Page() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Badge className="mb-3">{salon.category}</Badge>
+              <Badge className="mb-3">{salon.salonCategory}</Badge>
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-3">
-                {salon.name}
+                {salon.salonName}
               </h1>
               <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  <span className="text-sm">{salon.location}</span>
+                  <span className="text-sm">{salon.fullAddress}</span>
                 </div>
                 <div className="flex items-center gap-1 text-yellow-500">
                   <Star className="w-4 h-4 fill-current" />
                   <span className="font-semibold">{salon.rating}</span>
-                  <span className="text-muted-foreground text-sm">({salon.reviewCount} reviews)</span>
+                  <span className="text-muted-foreground text-sm">(256 reviews)</span>
                 </div>
               </div>
             </motion.div>
@@ -144,7 +267,7 @@ export default function Page() {
               >
                 <h2 className="text-2xl font-display font-semibold text-foreground mb-4">Gallery</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {salon.gallery.map((img, index) => (
+                  {salon.salonImages.map((img, index) => (
                     <motion.div
                       key={index}
                       whileHover={{ scale: 1.05 }}
@@ -167,7 +290,7 @@ export default function Page() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {salon.services.map((service, index) => (
                     <motion.div key={index} variants={itemVariants}>
-                      <ServiceCard {...service} onBook={() => console.log(`Booking ${service.name}`)} />
+                      <ServiceCard {...service} onBook={() => console.log(`Booking ${service.servicesName}`)} />
                     </motion.div>
                   ))}
                 </div>
@@ -182,7 +305,7 @@ export default function Page() {
               >
                 <h2 className="text-2xl font-display font-semibold text-foreground mb-6">Our Team</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {salon.barbers.map((barber, index) => (
+                  {salon.barber.map((barber, index) => (
                     <motion.div key={index} variants={itemVariants}>
                       <BarberCard {...barber} />
                     </motion.div>
@@ -221,7 +344,7 @@ export default function Page() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">Opening Hours</p>
-                        <p className="text-sm text-muted-foreground">{salon.openingHours}</p>
+                        <p className="text-sm text-muted-foreground">{salon.openingTime}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -230,7 +353,7 @@ export default function Page() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">Phone</p>
-                        <p className="text-sm text-muted-foreground">{salon.phone}</p>
+                        <p className="text-sm text-muted-foreground">{salon.phoneNumber}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -248,7 +371,7 @@ export default function Page() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">Address</p>
-                        <p className="text-sm text-muted-foreground">{salon.location}</p>
+                        <p className="text-sm text-muted-foreground">{salon.fullAddress}</p>
                       </div>
                     </div>
                   </div>
@@ -264,7 +387,7 @@ export default function Page() {
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">Address</p>
-                        <p className="text-sm text-muted-foreground">{salon.location}</p>
+                        <p className="text-sm text-muted-foreground">{salon.fullAddress}</p>
                       </div>
                     </div>
 

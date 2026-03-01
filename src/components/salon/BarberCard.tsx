@@ -3,13 +3,17 @@ import { Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface BarberCardProps {
-  name: string;
-  image: string;
+  _id: string;
+  barberName: string;
   experience: number;
   services: string[];
+  avatar: {
+    url: string;
+    publicId: string;
+  }
 }
 
-const BarberCard = ({ name, image, experience, services }: BarberCardProps) => {
+const BarberCard = ({ _id, barberName, avatar, experience, services }: BarberCardProps) => {
   return (
     <motion.div
       whileHover={{ y: -4 }}
@@ -18,14 +22,14 @@ const BarberCard = ({ name, image, experience, services }: BarberCardProps) => {
     >
       <div className="h-40 overflow-hidden">
         <img
-          src={image}
-          alt={name}
+          src={avatar.url}
+          alt={barberName}
           className="w-full h-full object-cover transition-transform duration-500 hover:scale-110"
         />
       </div>
       
       <div className="p-4">
-        <h4 className="font-semibold text-foreground mb-1">{name}</h4>
+        <h4 className="font-semibold text-foreground mb-1">{barberName}</h4>
         <div className="flex items-center gap-1 text-muted-foreground text-sm mb-3">
           <Briefcase className="w-3.5 h-3.5" />
           <span>{experience} years experience</span>

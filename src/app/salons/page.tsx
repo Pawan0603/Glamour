@@ -298,6 +298,10 @@ export default function page() {
                     description={salon.description}
                     rating={salon.rating}
                     salonCategory={salon.salonCategory}
+                    services={salon.services.map(s => s.servicesName)}
+                    openingTime={salon.openingTime}
+                    closingTime={salon.closingTime}
+                    weeklyAvailabity={salon.weeklyAvailabity}
                   />
                 </motion.div>
               ))}

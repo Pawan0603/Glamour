@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         }
 
         const salons = await SalonModel.find(findQuery, searchQuery ? { score: { $meta: "textScore" } } : {})
-            .select("_id salonName description city salonCoverImage rating salonCategory")
+            .select("_id salonName description city salonCoverImage rating salonCategory services openingTime closingTime weeklyAvailabity")
             .sort(sortOption)
             .skip(skip)
             .limit(limit)

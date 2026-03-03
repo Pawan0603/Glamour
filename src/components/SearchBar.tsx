@@ -2,12 +2,19 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const popularServices = ["Haircut", "Hair Color", "Manicure", "Facial", "Massage", "Makeup"];
 
 const SearchBar = () => {
-  const [query, setQuery] = useState("");
+  const router = useRouter();
+  const [query, setQuery] = useState<string>("");
   const [focused, setFocused] = useState(false);
+
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    router.push(`/salons?query=${query}`);
+  }
 
   return (
     <section className="py-6 md:py-8 relative -mt-16 md:mt-2 z-20">
@@ -19,7 +26,7 @@ const SearchBar = () => {
           transition={{ duration: 0.5 }}
           className="max-w-3xl mx-auto"
         >
-          <div className="bg-card rounded-2xl shadow-elevated p-5 md:p-7 border border-border">
+          <form onSubmit={handleSearch} className="bg-card rounded-2xl shadow-elevated p-5 md:p-7 border border-border">
 
             {/* Unified Search Bar */}
             <motion.div
@@ -38,12 +45,15 @@ const SearchBar = () => {
                 onBlur={() => setFocused(false)}
                 placeholder="Search salons, services, or treatments..."
                 className="flex-1 bg-transparent outline-none text-foreground placeholder:text-muted-foreground text-sm md:text-base"
+                required
+                minLength={3}
               />
 
               <AnimatePresence>
                 {query && (
                   <motion.button
                     key="clear"
+                    type="button"
                     initial={{ opacity: 0, scale: 0.7 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.7 }}
@@ -74,6 +84,7 @@ const SearchBar = () => {
               </span>
               {popularServices.map((service, index) => (
                 <motion.button
+                  type="button"
                   key={service}
                   initial={{ opacity: 0, scale: 0.85 }}
                   whileInView={{ opacity: 1, scale: 1 }}
@@ -88,7 +99,7 @@ const SearchBar = () => {
                 </motion.button>
               ))}
             </div>
-          </div>
+          </form>
         </motion.div>
       </div>
     </section>

@@ -1,72 +1,13 @@
 'use client';
-import React, { FormEventHandler, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, MapPin, Filter, X, SlidersHorizontal } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Search, X, SlidersHorizontal } from 'lucide-react';
 import Footer from '@/components/Footer';
 import SalonCard from '@/components/salon/SalonCard';
 import axios from 'axios';
 import { Salon } from '@/lib/interfaces';
+import { useSearchParams } from 'next/navigation';
 
-const mockSalons = [
-  {
-    id: "1",
-    name: "Elite Cuts Studio",
-    image: "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800",
-    location: "Koramangala, Bangalore",
-    description: "Premium unisex salon offering cutting-edge styles and luxurious treatments.",
-    rating: 4.8,
-    category: "Unisex",
-  },
-  {
-    id: "2",
-    name: "Glamour & Grace",
-    image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800",
-    location: "Indiranagar, Bangalore",
-    description: "Exclusive women's beauty parlour specializing in bridal and party makeup.",
-    rating: 4.9,
-    category: "Women",
-  },
-  {
-    id: "3",
-    name: "The Gentlemen's Lounge",
-    image: "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800",
-    location: "HSR Layout, Bangalore",
-    description: "Classic barbershop experience with modern grooming services for men.",
-    rating: 4.7,
-    category: "Men",
-  },
-  {
-    id: "4",
-    name: "Style Avenue",
-    image: "https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=800",
-    location: "Whitefield, Bangalore",
-    description: "Contemporary salon with expert stylists and organic beauty products.",
-    rating: 4.6,
-    category: "Unisex",
-  },
-  {
-    id: "5",
-    name: "Beauty Bliss",
-    image: "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?w=800",
-    location: "JP Nagar, Bangalore",
-    description: "Full-service beauty destination for all your pampering needs.",
-    rating: 4.5,
-    category: "Women",
-  },
-  {
-    id: "6",
-    name: "Urban Barbers",
-    image: "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800",
-    location: "MG Road, Bangalore",
-    description: "Trendy barbershop with skilled barbers and relaxed atmosphere.",
-    rating: 4.8,
-    category: "Men",
-  },
-];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -96,6 +37,8 @@ export default function page() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
   const [focused, setFocused] = useState(false);
+  const searchParams = useSearchParams();
+  const Query = searchParams.get("query");
 
   // const filteredSalons = mockSalons.filter((salon) => {
   //   const q = searchQuery.toLowerCase();
@@ -137,7 +80,12 @@ export default function page() {
   };
 
   useEffect(() => {
-    fetchSalons();
+    if (Query) {
+      setQuery(Query)
+      fetchSalons(true, Query, 1);
+    } else {
+      fetchSalons();
+    }
   }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -197,6 +145,7 @@ export default function page() {
 
               {/* Filter toggle */}
               <motion.button
+                type="button"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowFilters((v) => !v)}

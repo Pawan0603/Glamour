@@ -4,6 +4,7 @@ import axios, { AxiosError } from "axios";
 import { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { deleteCookie } from "../deleteCookie";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export interface User {
   id: string;
@@ -27,24 +28,16 @@ interface AuthContextType {
   refreshToken: () => void;
 }
 
-// const mockUser: User = {
-//   id: "1",
-//   name: "Priya Sharma",
-//   email: "priya@example.com",
-//   phone: "+91 98765 43210",
-//   role: "salon_owner",
-//   salonId: "salon-1",
-//   salonName: "Glamour Studio",
-// };
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const router = useRouter();
 
   const logout = () => {
     deleteCookie();
     setUser(null);
+    router.push('/');
   }
 
   const updateProfile = (

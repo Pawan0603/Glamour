@@ -1,12 +1,13 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { 
-  CalendarIcon, 
-  Clock, 
-  IndianRupee, 
-  ChevronLeft, 
+import { useSearchParams } from "next/navigation";
+import {
+  CalendarIcon,
+  Clock,
+  IndianRupee,
+  ChevronLeft,
   ChevronRight,
   Zap,
   Check,
@@ -21,7 +22,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const mockServiceData = {
@@ -89,14 +89,21 @@ const itemVariants = {
 };
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const serviceIds = searchParams.get("serviceIds");
+
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedBarber, setSelectedBarber] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
 
+  useEffect(() => {
+    setCurrentStep(serviceIds ? 2 : 1);
+  }, [serviceIds]);
+
   const steps = [
     { id: 1, title: "Select Barber" },
-    { id: 2, title: "Pick Date & Time" },
+    { id: 2, title: "Barber & Date, Time" },
     { id: 3, title: "Confirm" },
   ];
 
@@ -153,8 +160,8 @@ export default function Page() {
                       currentStep === step.id
                         ? "bg-primary text-primary-foreground"
                         : currentStep > step.id
-                        ? "bg-primary/20 text-primary"
-                        : "bg-muted text-muted-foreground"
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
                     )}
                   >
                     <span className="w-6 h-6 rounded-full bg-background/20 flex items-center justify-center text-sm font-semibold">
@@ -320,9 +327,58 @@ export default function Page() {
                       className="bg-card border border-border rounded-2xl p-6 shadow-card"
                     >
                       <h2 className="text-xl font-semibold text-foreground mb-4">
-                        Select Time Slot
+                        Select Barber & Time Slot
                       </h2>
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+
+                      <p>Service : HairCut</p>
+
+                      <div className="flex flex-row gap-4 mb-6 p-1 overflow-x-auto scrollbar-thin">
+                        {mockBarbers.map((barber) => (
+                          <motion.div
+                            key={barber.id}
+                            variants={itemVariants}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => setSelectedBarber(barber.id)}
+                            className={cn(
+                              "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
+                              selectedBarber === barber.id
+                                ? "border-primary bg-primary/5"
+                                : "border-border hover:border-primary/50"
+                            )}
+                          >
+                            {selectedBarber === barber.id && (
+                              <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                                <Check className="w-4 h-4 text-primary-foreground" />
+                              </div>
+                            )}
+                            <div className="flex flex-col items-center gap-4 w-32">
+                              <img
+                                src={barber.image}
+                                alt={barber.name}
+                                className="w-16 h-16 rounded-full object-cover"
+                              />
+                              <div className="w-full">
+                                <h3 className="font-semibold text-foreground">{barber.name}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {barber.experience} years exp.
+                                </p>
+                                <div className="flex flex-row gap-1 mt-2 overflow-x-auto no-scrollbar">
+                                  {barber.services.map((service, idx) => (
+                                    <Badge key={idx} variant="secondary" className="text-xs">
+                                      {service}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+
+                      <p className="text-muted-foreground">Available time slot for Rahul sharma</p>
+
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
                         {timeSlots.map((slot, index) => (
                           <motion.button
                             key={index}
@@ -335,8 +391,8 @@ export default function Page() {
                               !slot.available
                                 ? "bg-muted text-muted-foreground cursor-not-allowed line-through"
                                 : selectedTime === slot.time
-                                ? "bg-primary text-primary-foreground"
-                                : "bg-muted/50 text-foreground hover:bg-primary/10"
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted/50 text-foreground hover:bg-primary/10"
                             )}
                           >
                             {slot.time}
@@ -494,4 +550,4 @@ export default function Page() {
     </div>
   );
 };
- 
+

@@ -1,10 +1,9 @@
 'use client';
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { MapPin, Star, Clock, Phone, Mail, ChevronRight, ClipboardClock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ServiceCard from '@/components/salon/ServiceCard';
 import BarberCard from '@/components/salon/BarberCard';
@@ -52,17 +51,6 @@ export default function Page({ params }: Props) {
   useEffect(() => {
     fetchSalon();
   }, []);
-
-  // function handleSelectService(id: string) {
-  //   const service = salon?.services.find(s => s._id === id);
-  //   if (!service) return;
-
-  //   setSelectedServices(prev => [...prev, service]);
-  // }
-
-  // const removeService = (_id: string) => {
-
-  // }
 
   function toggleService(id: string) {
     setSelectedServices(prev => {

@@ -27,6 +27,14 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
+
+  if(!token && request.nextUrl.pathname.startsWith('/book-appointment')){
+    return NextResponse.redirect(new URL('/auth', request.url));
+  }
+
+  if(token && request.nextUrl.pathname.startsWith('/book-appointment') && !request.nextUrl.searchParams.get("salonId")){
+    return NextResponse.redirect(new URL('/salons', request.url));
+  }
   
 }
 
@@ -36,5 +44,6 @@ export const config = {
     '/forgot-password/:path*',
     '/owner/:path*',
     '/register-salon/:path*',
+    '/book-appointment/:path*',
   ],
 }

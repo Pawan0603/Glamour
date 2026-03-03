@@ -250,6 +250,10 @@
     scrollbar-color: hsl(var(--muted)) transparent;
   }
 
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }

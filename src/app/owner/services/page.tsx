@@ -66,7 +66,7 @@ export default function Page() {
     }
 
     try {
-      const res = await axios.patch(`/api/salon/${user?.salonId}/add-service`, serviceData, {
+      const res = await axios.patch(`/api/owner/salon/${user?.salonId}/add-service`, serviceData, {
         headers: {
           'Content-Type': 'application/json',
         }

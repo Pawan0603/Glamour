@@ -142,7 +142,7 @@ export default function Page() {
 
   const handleDeleteBarber = async (barberId: string) => {
     try {
-      const res = await axios.delete(`/api/salon/${user?.salonId}/delete-barber`, {
+      const res = await axios.delete(`/api/owner/salon/${user?.salonId}/delete-barber`, {
         params: {
           barberId: barberId
         },

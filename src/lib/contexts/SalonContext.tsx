@@ -25,7 +25,7 @@ export const SalonProvider = ({
     if (!user?.salonId) return;
 
     try {
-      const res = await axios.get(`/api/salon/${user.salonId}`);
+      const res = await axios.get(`/api/owner/salon/${user.salonId}`);
       console.log(res.data);
       setSalon(res.data.salon);
     } catch (error) {

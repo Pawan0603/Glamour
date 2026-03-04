@@ -118,7 +118,7 @@ export default function Page() {
     console.log(barberData)
 
     try {
-      const res = await axios.patch(`/api/salon/${user?.salonId}/add-barber`, barberData, {
+      const res = await axios.patch(`/api/owner/salon/${user?.salonId}/add-barber`, barberData, {
         headers: {
           'Content-Type': 'application/json',
         }

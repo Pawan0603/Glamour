@@ -84,7 +84,7 @@ export default function Page() {
   const handleDeleteService = async (serviceId: string) => {
     // setServices(services.filter((s) => s._id !== _id));
     try {
-      const response = await axios.delete(`/api/salon/${user?.salonId}/delete-service`, {
+      const response = await axios.delete(`/api/owner/salon/${user?.salonId}/delete-service`, {
         params: {
           serviceId: serviceId
         },

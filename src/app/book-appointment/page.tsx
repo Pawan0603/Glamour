@@ -25,9 +25,10 @@ import {
 import Footer from "@/components/Footer";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
-import { Salon, Service } from "@/lib/interfaces";
+import { IAppointment, Salon, Service } from "@/lib/interfaces";
 import { generateAvailableSlots } from "@/lib/booking/generateSlots";
 import Link from "next/link";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -50,9 +51,11 @@ export default function Page() {
   const searchParams = useSearchParams();
   const serviceIds = searchParams.get("serviceIds")?.split(',');
   const salonId = searchParams.get("salonId");
+  const { user } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(serviceIds ? 2 : 1);
   const [selectedBarber, setSelectedBarber] = useState<string | null>(null);
+  const [selectedBarberId, setSelectedBarberId] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [salon, setSalon] = useState<Salon>();
@@ -61,6 +64,8 @@ export default function Page() {
   const [serviceDuration, setServiceDuration] = useState<number>(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [availableSlot, setAvailableSlot] = useState<string[]>([]);
+
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const steps = [
     { id: 1, title: "Select Barber" },
@@ -145,6 +150,35 @@ export default function Page() {
 
     getSlotTimeLine();
   };
+
+  const handleBookAppointment = async () => {
+    const data = {
+      customerId: user?.userId!,
+      customerName: user?.name!,
+      salonId: salon?._id!,
+      salonName: salon?.salonName!,
+      fullAddress: salon?.fullAddress!,
+      city: salon?.city!,
+      barberId: selectedBarberId!,
+      barberName: selectedBarber!,
+      appointmentDate: selectedDate!,
+      appointmentTime: selectedTime!,
+      duration: serviceDuration,
+      services: selectedServices,
+      status: "Scheduled",
+    }
+
+    try {
+      setIsSubmitting(true);
+      const res = await axios.post(`/api/salon/book-appointment`, data);
+      toast.success(res.data.message || "Appointment book successfully.")
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "somethin went worng.")
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   const handleBookFirstAvailable = () => {
     const today = new Date();
@@ -253,7 +287,7 @@ export default function Page() {
                             variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => { setSelectedBarber(barber.barberName); generateSlots(barber.barberName) }}
+                            onClick={() => { setSelectedBarber(barber.barberName); setSelectedBarberId(barber._id); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
                               selectedBarber === barber.barberName
@@ -379,7 +413,7 @@ export default function Page() {
                             // variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => { setSelectedBarber(barber.barberName); generateSlots(barber.barberName) }}
+                            onClick={() => { setSelectedBarber(barber.barberName); setSelectedBarberId(barber._id); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
                               selectedBarber === barber.barberName
@@ -499,8 +533,8 @@ export default function Page() {
                       </div>
                     </div>
 
-                    <Button className="w-full" size="lg">
-                      Confirm Appointment
+                    <Button type="button" onClick={handleBookAppointment} className="w-full" size="lg" disabled={isSubmitting}>
+                      {isSubmitting ? <span>Booking Appointment...</span> : <span>Confirm Appointment</span>}
                     </Button>
                   </motion.div>
                 )}

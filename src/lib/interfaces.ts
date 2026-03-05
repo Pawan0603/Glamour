@@ -65,14 +65,15 @@ export interface Salon extends SalonFormData {
 
 // ========================== Appointment interfeces =================
 
-export interface IAppointmentServices extends Document{
-  name: string;
-  price: number;
-  time: string;
-  duration: number;
-}
+// export interface IAppointmentServices extends Document{
+//   servicesName: string;
+//   price: number;
+//   time: string;
+//   duration: number;
+// }
 
-export interface IAppointment extends Document {
+export interface IAppointment {
+  _id?: string;
   customerId: mongoose.Schema.Types.ObjectId;
   customerName: string;
   salonId: mongoose.Schema.Types.ObjectId;
@@ -84,6 +85,6 @@ export interface IAppointment extends Document {
   appointmentDate: Date;
   appointmentTime: string;
   duration: number;
-  services: IAppointmentServices[];
+  services: Service[];
   status: "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
 }

@@ -1,8 +1,8 @@
 import mongoose, {type Document, Schema} from "mongoose";
-import { IAppointment, IAppointmentServices } from "../interfaces";
+import { IAppointment, Service } from "../interfaces";
 
-const AppointmentServicesSchema = new Schema<IAppointmentServices>({
-    name: {
+const AppointmentServicesSchema = new Schema<Service>({
+    servicesName: {
         type: String,
         required: [true, "Service name is required."]
     },
@@ -10,7 +10,7 @@ const AppointmentServicesSchema = new Schema<IAppointmentServices>({
         type: Number,
         required: [true, "Service price is required."]
     },
-    time: {
+    category: {
         type: String,
         required: [true, "Service time is required."]
     },
@@ -56,13 +56,17 @@ const AppointmentSchema = new Schema<IAppointment>({
         required: [true, "barberName is required"],
         trim: true
     },
-     appointmentDate: {
+    appointmentDate: {
         type: Date,
         required: [true, "appointmentDate is required"]
     },
     appointmentTime: {
         type: String,
         required: [true, "appointmentTime is required"]
+    },
+    duration: {
+        type: Number,
+        required: [true, "appointment duration is required."]
     },
     services: [AppointmentServicesSchema],
     status: {

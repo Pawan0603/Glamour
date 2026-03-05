@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarIcon,
   Clock,
@@ -48,6 +48,7 @@ interface BusySlots {
 }
 
 export default function Page() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const serviceIds = searchParams.get("serviceIds")?.split(',');
   const salonId = searchParams.get("salonId");
@@ -108,15 +109,15 @@ export default function Page() {
     }
   }
 
-  const getSlotTimeLine = async () => {
+  const getSlotTimeLine = async (date: Date) => {
     try {
       const res = await axios.get(`/api/salon/${salonId}/get-slotTimeLine`, {
         params: {
-          date: selectedDate === undefined ? new Date().toLocaleDateString("en-CA") : selectedDate?.toLocaleDateString("en-CA")
+          date: date?.toLocaleDateString("en-CA")
         }
       });
       setBusySlotTimeLine(res.data.data);
-      console.log(res.data.data)
+      // console.log(res.data.data)
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "somethin went worng.")
@@ -126,7 +127,7 @@ export default function Page() {
   useEffect(() => {
     if (salonId) {
       fetchSalonData();
-      getSlotTimeLine();
+      getSlotTimeLine(new Date());
     }
   }, []);
 
@@ -135,7 +136,7 @@ export default function Page() {
       const slot = generateAvailableSlots([], salon?.openingTime!, salon?.closingTime!, 15, serviceDuration)
       setAvailableSlot(slot);
     } else {
-      const slot = generateAvailableSlots(busySlotTimeLine.barberName, salon?.openingTime!, salon?.closingTime!, 15, serviceDuration)
+      const slot = generateAvailableSlots(busySlotTimeLine[barberName], salon?.openingTime!, salon?.closingTime!, 15, serviceDuration)
       setAvailableSlot(slot);
     }
   }
@@ -148,7 +149,7 @@ export default function Page() {
     setSelectedTime(null);
     setAvailableSlot([]);
 
-    getSlotTimeLine();
+    getSlotTimeLine(date);
   };
 
   const handleBookAppointment = async () => {
@@ -161,7 +162,7 @@ export default function Page() {
       city: salon?.city!,
       barberId: selectedBarberId!,
       barberName: selectedBarber!,
-      appointmentDate: selectedDate!,
+      appointmentDate: selectedDate!.toLocaleDateString("en-CA"),
       appointmentTime: selectedTime!,
       duration: serviceDuration,
       services: selectedServices,
@@ -172,6 +173,7 @@ export default function Page() {
       setIsSubmitting(true);
       const res = await axios.post(`/api/salon/book-appointment`, data);
       toast.success(res.data.message || "Appointment book successfully.")
+      router.push('/my-appointments')
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "somethin went worng.")

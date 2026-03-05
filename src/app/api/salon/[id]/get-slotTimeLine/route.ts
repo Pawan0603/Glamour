@@ -5,75 +5,63 @@ import AppointmentModel from "@/lib/models/appointment";
 import { NextResponse } from "next/server";
 
 interface RouteContext {
-    params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 }
 
-const mockdata = [
-    {
-        barberName: "Aman",
-        appointmentTime: "10:00",
-        duration: 60,
-    },
-    {
-        barberName: "Aman",
-        appointmentTime: "11:00",
-        duration: 30,
-    },
-    {
-        barberName: "Aman",
-        appointmentTime: "12:00",
-        duration: 90,
-    },
-    {
-        barberName: "Rahul",
-        appointmentTime: "10:30",
-        duration: 60,
-    },
-    {
-        barberName: "Rahul",
-        appointmentTime: "12:00",
-        duration: 60,
-    },
-    {
-        barberName: "Rahul",
-        appointmentTime: "13:00",
-        duration: 120,
-    },
-    {
-        barberName: "Sahil",
-        appointmentTime: "09:00",
-        duration: 45,
-    },
-    {
-        barberName: "Sahil",
-        appointmentTime: "10:00",
-        duration: 60,
-    },
-];
-
 async function getSlotTimeLine(req: AuthenticatedRequest, context: RouteContext) {
-    await connectDB();
-    try {
-        const { id } = await context.params;
-        // const date = await req.json();
+  await connectDB();
 
-        const { searchParams } = new URL(req.url);
-        const date = searchParams.get("date");
+  try {
+    const { id } = await context.params;
 
-        if (!id) return NextResponse.json({ error: "salonId was not found!" }, { status: 404 });
+    const { searchParams } = new URL(req.url);
+    const date = searchParams.get("date");
 
-        const appointments = await AppointmentModel.find({ salonId: id, appointmentDate: date }).select("barberName appointmentTime duration");
-
-        if (appointments.length === 0) {
-            return NextResponse.json({ success: true, data: [] }, { status: 200 });
-        }
-
-        const busySlots = getBusySlots(appointments);
-
-        return NextResponse.json({ success: true, data: busySlots }, { status: 200 });
-    } catch (error) {
-        return NextResponse.json({ error: "Internal server error..." }, { status: 500 });
+    if (!id) {
+      return NextResponse.json(
+        { error: "salonId was not found!" },
+        { status: 404 }
+      );
     }
+
+    if (!date) {
+      return NextResponse.json(
+        { error: "date query param required" },
+        { status: 400 }
+      );
+    }
+
+    const start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+
+    const appointments = await AppointmentModel.find({
+      salonId: id,
+      appointmentDate: {
+        $gte: start,
+        $lte: end,
+      },
+    }).select("barberName appointmentTime duration");
+    
+    if (appointments.length === 0) {
+      return NextResponse.json({ success: true, data: [] }, { status: 200 });
+    }
+
+    const busySlots = getBusySlots(appointments);
+
+    return NextResponse.json(
+      { success: true, data: busySlots },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: "Internal server error..." },
+      { status: 500 }
+    );
+  }
 }
 
 export const GET = withAuth(getSlotTimeLine);

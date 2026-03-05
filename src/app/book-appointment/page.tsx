@@ -27,57 +27,7 @@ import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { Salon, Service } from "@/lib/interfaces";
 import { generateAvailableSlots } from "@/lib/booking/generateSlots";
-
-const mockServiceData = {
-  salonName: "Elite Cuts Studio",
-  salonLocation: "Koramangala, Bangalore",
-  serviceName: "Haircut & Styling",
-  price: 500,
-  duration: 45,
-};
-
-const mockBarbers = [
-  {
-    id: "1",
-    name: "Rahul Sharma",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    experience: 8,
-    services: ["Haircut", "Styling", "Beard Trim"],
-  },
-  {
-    id: "2",
-    name: "Priya Patel",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-    experience: 6,
-    services: ["Haircut", "Styling", "Coloring"],
-  },
-  {
-    id: "3",
-    name: "Arjun Kumar",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400",
-    experience: 5,
-    services: ["Haircut", "Beard Trim"],
-  },
-];
-
-const timeSlots = [
-  { time: "10:00 AM", available: true },
-  { time: "10:30 AM", available: true },
-  { time: "11:00 AM", available: false },
-  { time: "11:30 AM", available: true },
-  { time: "12:00 PM", available: true },
-  { time: "12:30 PM", available: false },
-  { time: "02:00 PM", available: true },
-  { time: "02:30 PM", available: true },
-  { time: "03:00 PM", available: true },
-  { time: "03:30 PM", available: false },
-  { time: "04:00 PM", available: true },
-  { time: "04:30 PM", available: true },
-  { time: "05:00 PM", available: true },
-  { time: "05:30 PM", available: false },
-  { time: "06:00 PM", available: true },
-  { time: "06:30 PM", available: true },
-];
+import Link from "next/link";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -109,6 +59,7 @@ export default function Page() {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [busySlotTimeLine, setBusySlotTimeLine] = useState<BusySlots>({});
   const [serviceDuration, setServiceDuration] = useState<number>(0);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [availableSlot, setAvailableSlot] = useState<string[]>([]);
 
   const steps = [
@@ -119,11 +70,14 @@ export default function Page() {
 
   useEffect(() => {
     let duration = 0;
+    let total = 0;
     if (selectedServices.length === 0) setServiceDuration(0)
     for (let service of selectedServices) {
       duration += service.duration;
+      total += service.price;
     }
     setServiceDuration(duration);
+    setTotalPrice(total);
   }, [selectedServices]);
 
   const setSelectedServicesHandler = (data: Service[]) => {
@@ -194,12 +148,12 @@ export default function Page() {
 
   const handleBookFirstAvailable = () => {
     const today = new Date();
-    const firstAvailable = timeSlots.find((slot) => slot.available);
-    if (firstAvailable) {
-      setSelectedDate(today);
-      setSelectedTime(firstAvailable.time);
-      setCurrentStep(3);
-    }
+    // const firstAvailable = timeSlots.find((slot) => slot.available);
+    // if (firstAvailable) {
+    //   setSelectedDate(today);
+    //   setSelectedTime(firstAvailable.time);
+    //   setCurrentStep(3);
+    // }
   };
 
   const canProceed = () => {
@@ -299,10 +253,10 @@ export default function Page() {
                             variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => { setSelectedBarber(barber._id); generateSlots(barber.barberName) }}
+                            onClick={() => { setSelectedBarber(barber.barberName); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
-                              selectedBarber === barber._id
+                              selectedBarber === barber.barberName
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-primary/50"
                             )}
@@ -419,16 +373,16 @@ export default function Page() {
                       <p>Service : HairCut</p>
 
                       <div className="flex flex-row gap-4 mb-6 p-1 overflow-x-auto scrollbar-thin">
-                        {salon?.barber.map((barber) => (
+                        {salon && salon?.barber.map((barber) => (
                           <motion.div
                             key={barber._id}
-                            variants={itemVariants}
+                            // variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => { setSelectedBarber(barber._id); generateSlots(barber.barberName) }}
+                            onClick={() => { setSelectedBarber(barber.barberName); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
-                              selectedBarber === barber._id
+                              selectedBarber === barber.barberName
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-primary/50"
                             )}
@@ -510,17 +464,19 @@ export default function Page() {
                     <div className="space-y-4 mb-6">
                       <div className="flex justify-between py-3 border-b border-border">
                         <span className="text-muted-foreground">Service</span>
-                        <span className="font-medium text-foreground">{mockServiceData.serviceName}</span>
+                        <span className="font-medium text-foreground space-x-2" >
+                          {selectedServices.map((service, index) => <span key={index}>{service.servicesName},</span>)}
+                        </span>
                       </div>
                       <div className="flex justify-between py-3 border-b border-border">
                         <span className="text-muted-foreground">Salon</span>
-                        <span className="font-medium text-foreground">{mockServiceData.salonName}</span>
+                        <span className="font-medium text-foreground">{salon?.salonName}</span>
                       </div>
                       {selectedBarber && (
                         <div className="flex justify-between py-3 border-b border-border">
                           <span className="text-muted-foreground">Barber</span>
                           <span className="font-medium text-foreground">
-                            {mockBarbers.find((b) => b.id === selectedBarber)?.name}
+                            {selectedBarber}
                           </span>
                         </div>
                       )}
@@ -538,7 +494,7 @@ export default function Page() {
                         <span className="text-muted-foreground">Total</span>
                         <span className="text-xl font-bold text-primary flex items-center">
                           <IndianRupee className="w-5 h-5" />
-                          {mockServiceData.price}
+                          {totalPrice}
                         </span>
                       </div>
                     </div>
@@ -623,9 +579,11 @@ export default function Page() {
 
                   <div className="h-px bg-border" />
 
-                  <Button variant="outline" className="w-full" size="sm">
-                    Change Service
-                  </Button>
+                  <Link href={`/salons/${salonId}`}>
+                    <Button type="button" variant="outline" className="w-full" size="sm">
+                      Change Service
+                    </Button>
+                  </Link>
                 </div>
               </motion.div>
             </div>

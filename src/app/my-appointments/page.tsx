@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { 
@@ -25,6 +25,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Footer from "@/components/Footer";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
 
 type AppointmentStatus = "booked" | "completed" | "cancelled";
 

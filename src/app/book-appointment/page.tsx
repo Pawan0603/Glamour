@@ -23,6 +23,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import Footer from "@/components/Footer";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import { Salon, Service } from "@/lib/interfaces";
+import { generateAvailableSlots } from "@/lib/booking/generateSlots";
 
 const mockServiceData = {
   salonName: "Elite Cuts Studio",
@@ -88,24 +92,105 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+interface BusySlots {
+  [barberName: string]: string[];
+}
+
 export default function Page() {
   const searchParams = useSearchParams();
-  const serviceIds = searchParams.get("serviceIds");
+  const serviceIds = searchParams.get("serviceIds")?.split(',');
+  const salonId = searchParams.get("salonId");
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const [currentStep, setCurrentStep] = useState(serviceIds ? 2 : 1);
   const [selectedBarber, setSelectedBarber] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-
-  useEffect(() => {
-    setCurrentStep(serviceIds ? 2 : 1);
-  }, [serviceIds]);
+  const [salon, setSalon] = useState<Salon>();
+  const [selectedServices, setSelectedServices] = useState<Service[]>([]);
+  const [busySlotTimeLine, setBusySlotTimeLine] = useState<BusySlots>({});
+  const [serviceDuration, setServiceDuration] = useState<number>(0);
+  const [availableSlot, setAvailableSlot] = useState<string[]>([]);
 
   const steps = [
     { id: 1, title: "Select Barber" },
     { id: 2, title: "Barber & Date, Time" },
     { id: 3, title: "Confirm" },
   ];
+
+  useEffect(() => {
+    let duration = 0;
+    if (selectedServices.length === 0) setServiceDuration(0)
+    for (let service of selectedServices) {
+      duration += service.duration;
+    }
+    setServiceDuration(duration);
+  }, [selectedServices]);
+
+  const setSelectedServicesHandler = (data: Service[]) => {
+    if (!data || !serviceIds) return;
+    const selected = data.filter((service) =>
+      serviceIds.includes(service._id)
+    );
+    setSelectedServices(selected);
+  };
+
+  const fetchSalonData = async () => {
+    try {
+      const res = await axios.get(`/api/salon/${salonId}/appointmentValidationData`, {
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      setSalon(res.data.data);
+      setSelectedServicesHandler(res.data.data.services);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "somethin went worng.")
+    }
+  }
+
+  const getSlotTimeLine = async () => {
+    try {
+      const res = await axios.get(`/api/salon/${salonId}/get-slotTimeLine`, {
+        params: {
+          date: selectedDate === undefined ? new Date().toLocaleDateString("en-CA") : selectedDate?.toLocaleDateString("en-CA")
+        }
+      });
+      setBusySlotTimeLine(res.data.data);
+      console.log(res.data.data)
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "somethin went worng.")
+    }
+  }
+
+  useEffect(() => {
+    if (salonId) {
+      fetchSalonData();
+      getSlotTimeLine();
+    }
+  }, []);
+
+  const generateSlots = (barberName: string) => {
+    if (!busySlotTimeLine[barberName]) {
+      const slot = generateAvailableSlots([], salon?.openingTime!, salon?.closingTime!, 15, serviceDuration)
+      setAvailableSlot(slot);
+    } else {
+      const slot = generateAvailableSlots(busySlotTimeLine.barberName, salon?.openingTime!, salon?.closingTime!, 15, serviceDuration)
+      setAvailableSlot(slot);
+    }
+  }
+
+  const handleDateChange = async (date: Date | undefined) => {
+    if (!date) return;
+
+    setSelectedDate(date);
+    setSelectedBarber(null);
+    setSelectedTime(null);
+    setAvailableSlot([]);
+
+    getSlotTimeLine();
+  };
 
   const handleBookFirstAvailable = () => {
     const today = new Date();
@@ -208,33 +293,33 @@ export default function Page() {
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {mockBarbers.map((barber) => (
+                        {salon?.barber.map((barber) => (
                           <motion.div
-                            key={barber.id}
+                            key={barber._id}
                             variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedBarber(barber.id)}
+                            onClick={() => { setSelectedBarber(barber._id); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
-                              selectedBarber === barber.id
+                              selectedBarber === barber._id
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-primary/50"
                             )}
                           >
-                            {selectedBarber === barber.id && (
+                            {selectedBarber === barber._id && (
                               <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                 <Check className="w-4 h-4 text-primary-foreground" />
                               </div>
                             )}
                             <div className="flex items-center gap-4">
                               <img
-                                src={barber.image}
-                                alt={barber.name}
+                                src={barber.avatar.url}
+                                alt={barber.barberName}
                                 className="w-16 h-16 rounded-full object-cover"
                               />
                               <div>
-                                <h3 className="font-semibold text-foreground">{barber.name}</h3>
+                                <h3 className="font-semibold text-foreground">{barber.barberName}</h3>
                                 <p className="text-sm text-muted-foreground">
                                   {barber.experience} years exp.
                                 </p>
@@ -313,6 +398,7 @@ export default function Page() {
                             mode="single"
                             selected={selectedDate}
                             onSelect={setSelectedDate}
+                            onDayClick={handleDateChange}
                             disabled={(date) => date < new Date()}
                             initialFocus
                             className="p-3 pointer-events-auto"
@@ -333,33 +419,33 @@ export default function Page() {
                       <p>Service : HairCut</p>
 
                       <div className="flex flex-row gap-4 mb-6 p-1 overflow-x-auto scrollbar-thin">
-                        {mockBarbers.map((barber) => (
+                        {salon?.barber.map((barber) => (
                           <motion.div
-                            key={barber.id}
+                            key={barber._id}
                             variants={itemVariants}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => setSelectedBarber(barber.id)}
+                            onClick={() => { setSelectedBarber(barber._id); generateSlots(barber.barberName) }}
                             className={cn(
                               "relative p-4 rounded-xl border-2 cursor-pointer transition-all",
-                              selectedBarber === barber.id
+                              selectedBarber === barber._id
                                 ? "border-primary bg-primary/5"
                                 : "border-border hover:border-primary/50"
                             )}
                           >
-                            {selectedBarber === barber.id && (
+                            {selectedBarber === barber._id && (
                               <div className="absolute top-3 right-3 w-6 h-6 bg-primary rounded-full flex items-center justify-center">
                                 <Check className="w-4 h-4 text-primary-foreground" />
                               </div>
                             )}
                             <div className="flex flex-col items-center gap-4 w-32">
                               <img
-                                src={barber.image}
-                                alt={barber.name}
+                                src={barber.avatar.url}
+                                alt={barber.barberName}
                                 className="w-16 h-16 rounded-full object-cover"
                               />
                               <div className="w-full">
-                                <h3 className="font-semibold text-foreground">{barber.name}</h3>
+                                <h3 className="flex flex-colfont-semibold text-foreground">{barber.barberName}</h3>
                                 <p className="text-sm text-muted-foreground">
                                   {barber.experience} years exp.
                                 </p>
@@ -376,26 +462,23 @@ export default function Page() {
                         ))}
                       </div>
 
-                      <p className="text-muted-foreground">Available time slot for Rahul sharma</p>
+                      <p className="text-muted-foreground">Available slots</p>
 
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-3">
-                        {timeSlots.map((slot, index) => (
+                        {availableSlot.map((slot, index) => (
                           <motion.button
                             key={index}
-                            whileHover={slot.available ? { scale: 1.05 } : {}}
-                            whileTap={slot.available ? { scale: 0.95 } : {}}
-                            onClick={() => slot.available && setSelectedTime(slot.time)}
-                            disabled={!slot.available}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setSelectedTime(slot)}
                             className={cn(
                               "py-3 px-4 rounded-xl text-sm font-medium transition-all",
-                              !slot.available
-                                ? "bg-muted text-muted-foreground cursor-not-allowed line-through"
-                                : selectedTime === slot.time
-                                  ? "bg-primary text-primary-foreground"
-                                  : "bg-muted/50 text-foreground hover:bg-primary/10"
+                              selectedTime === slot
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-muted/50 text-foreground hover:bg-primary/10"
                             )}
                           >
-                            {slot.time}
+                            {slot}
                           </motion.button>
                         ))}
                       </div>
@@ -509,30 +592,34 @@ export default function Page() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Salon</p>
-                    <p className="font-medium text-foreground">{mockServiceData.salonName}</p>
+                    <p className="font-medium text-foreground">{salon?.salonName}</p>
                     <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <MapPin className="w-3.5 h-3.5" />
-                      {mockServiceData.salonLocation}
+                      {salon?.city}
                     </div>
                   </div>
 
                   <div className="h-px bg-border" />
 
-                  <div>
-                    <p className="text-sm text-muted-foreground">Service</p>
-                    <p className="font-medium text-foreground">{mockServiceData.serviceName}</p>
-                  </div>
+                  {salon && serviceIds && selectedServices.map((service) => {
+                    if (serviceIds?.includes(service._id)) return <div key={service._id}>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Service</p>
+                        <p className="font-medium text-foreground">{service.servicesName}</p>
+                      </div>
 
-                  <div className="flex gap-4">
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Clock className="w-4 h-4" />
-                      {mockServiceData.duration} mins
+                      <div className="flex gap-4">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          {service.duration} mins
+                        </div>
+                        <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+                          <IndianRupee className="w-4 h-4" />
+                          {service.price}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 text-sm font-semibold text-primary">
-                      <IndianRupee className="w-4 h-4" />
-                      {mockServiceData.price}
-                    </div>
-                  </div>
+                  })}
 
                   <div className="h-px bg-border" />
 

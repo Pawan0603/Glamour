@@ -1,16 +1,24 @@
 import mongoose, {type Document, Schema} from "mongoose";
+import { IAppointment, IAppointmentServices } from "../interfaces";
 
-export interface IAppointment extends Document {
-    customerId: mongoose.Schema.Types.ObjectId;
-    salonId: mongoose.Schema.Types.ObjectId;
-    barberName: string;
-    serviceName: string;
-    appointmentDate: Date;
-    appointmentTime: string;
-    status: "Scheduled" | "Completed" | "Cancelled";
-    createdAt: Date;
-    updatedAt: Date;
-}
+const AppointmentServicesSchema = new Schema<IAppointmentServices>({
+    name: {
+        type: String,
+        required: [true, "Service name is required."]
+    },
+    price: {
+        type: Number,
+        required: [true, "Service price is required."]
+    },
+    time: {
+        type: String,
+        required: [true, "Service time is required."]
+    },
+    duration: {
+        type: Number,
+        required: [true, "Service duration is required."]
+    }
+})
 
 const AppointmentSchema = new Schema<IAppointment>({
     customerId: {
@@ -18,22 +26,37 @@ const AppointmentSchema = new Schema<IAppointment>({
         ref: "User",
         required: [true, "customerId is required"]
     },
+    customerName: {
+        type: String,
+        required: [true, "customer name is required"]
+    },
     salonId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Salon",
         required: [true, "salonId is required"]
+    },
+    salonName: {
+        type: String,
+        required: [true, "salonId is required"]
+    },
+    fullAddress: {
+        type: String,
+        required: [true, "fullAddress is required"]
+    },
+    city: {
+        type: String,
+        required: [true, "city is required."]
+    },
+    barberId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: [true, "barberId is required."]
     },
     barberName: {
         type: String,
         required: [true, "barberName is required"],
         trim: true
     },
-    serviceName: {
-        type: String,
-        required: [true, "serviceName is required"],
-        trim: true
-    },
-    appointmentDate: {
+     appointmentDate: {
         type: Date,
         required: [true, "appointmentDate is required"]
     },
@@ -41,9 +64,10 @@ const AppointmentSchema = new Schema<IAppointment>({
         type: String,
         required: [true, "appointmentTime is required"]
     },
+    services: [AppointmentServicesSchema],
     status: {
         type: String,
-        enum: ["Scheduled", "Completed", "Cancelled"],
+        enum: ["Scheduled", "Completed", "Cancelled", " Incomplete"],
         default: "Scheduled"
     }
 }, {timestamps: true});

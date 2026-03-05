@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { type Document } from "mongoose";
 
 export interface IAvatar {
   url: string,
@@ -60,4 +60,30 @@ export interface Salon extends SalonFormData {
   services: Service[]; 
   barber: Barber[];
   rating: number;
+}
+
+
+// ========================== Appointment interfeces =================
+
+export interface IAppointmentServices extends Document{
+  name: string;
+  price: number;
+  time: string;
+  duration: number;
+}
+
+export interface IAppointment extends Document {
+  customerId: mongoose.Schema.Types.ObjectId;
+  customerName: string;
+  salonId: mongoose.Schema.Types.ObjectId;
+  salonName: string;
+  fullAddress: string;
+  city: string;
+  barberId: mongoose.Schema.Types.ObjectId;
+  barberName: string;
+  appointmentDate: Date;
+  appointmentTime: string;
+  duration: number;
+  services: IAppointmentServices[];
+  status: "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
 }

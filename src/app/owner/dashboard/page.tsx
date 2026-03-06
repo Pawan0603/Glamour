@@ -13,6 +13,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { IAppointment } from "@/lib/interfaces";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,80 +30,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
-
-const statsData = [
-  {
-    title: "Total Appointments",
-    value: "156",
-    change: "+12%",
-    icon: Calendar,
-    color: "from-blue-500 to-blue-600",
-  },
-  {
-    title: "Total Services",
-    value: "24",
-    change: "+3",
-    icon: Scissors,
-    color: "from-primary to-primary/80",
-  },
-  {
-    title: "Total Barbers",
-    value: "8",
-    change: "+1",
-    icon: Users,
-    color: "from-emerald-500 to-emerald-600",
-  },
-  {
-    title: "Revenue",
-    value: "₹45,200",
-    change: "+18%",
-    icon: TrendingUp,
-    color: "from-amber-500 to-amber-600",
-  },
-];
-
-const recentAppointments = [
-  {
-    id: 1,
-    customer: "Rahul Sharma",
-    service: "Haircut + Beard",
-    barber: "Amit Kumar",
-    time: "10:00 AM",
-    status: "completed",
-  },
-  {
-    id: 2,
-    customer: "Priya Singh",
-    service: "Hair Spa",
-    barber: "Neha Verma",
-    time: "11:30 AM",
-    status: "completed",
-  },
-  {
-    id: 3,
-    customer: "Vikram Patel",
-    service: "Shaving",
-    barber: "Raj Singh",
-    time: "2:00 PM",
-    status: "pending",
-  },
-  {
-    id: 4,
-    customer: "Anita Desai",
-    service: "Hair Color",
-    barber: "Neha Verma",
-    time: "3:30 PM",
-    status: "pending",
-  },
-  {
-    id: 5,
-    customer: "Suresh Kumar",
-    service: "Facial",
-    barber: "Amit Kumar",
-    time: "4:00 PM",
-    status: "cancelled",
-  },
-];
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -116,14 +46,40 @@ const getStatusIcon = (status: string) => {
 
 const getStatusBadge = (status: string) => {
   const styles = {
-    completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    pending: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    cancelled: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+    Completed: "text-emerald-700 dark:text-emerald-400",
+    Scheduled: "text-amber-700 dark:text-amber-400",
+    Cancelled: "text-red-700 dark:text-red-400",
   };
   return styles[status as keyof typeof styles] || "";
 };
 
+interface IAnalysisData {
+  appointmentsCount: number;
+  servicesCount: number;
+  barberCount: number;
+  revenue: number;
+  appointments: IAppointment[];
+}
+
 export default function OwnerDashboard() {
+  const [analysisData, setAnalysisData] = useState<IAnalysisData | null>(null);
+
+  const getAnalysis = async () => {
+    try {
+      const res = await axios.get('/api/owner/dashboard-analysis');
+      setAnalysisData(res.data.data);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "Something went worng!");
+    }
+  }
+
+  useEffect(() => {
+    getAnalysis();
+  }, []);
+
+  if(analysisData === null) return
+
   return (
     <motion.div
       variants={containerVariants}
@@ -146,31 +102,95 @@ export default function OwnerDashboard() {
         variants={itemVariants}
         className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
       >
-        {statsData.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
-            whileHover={{ y: -4 }}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{stat.title}</p>
-                <p className="text-3xl font-bold text-foreground mt-2">
-                  {stat.value}
-                </p>
-                <p className="text-sm text-emerald-600 mt-1">{stat.change}</p>
-              </div>
-              <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.color} flex items-center justify-center`}
-              >
-                <stat.icon className="w-6 h-6 text-white" />
-              </div>
+        <motion.div
+          className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
+          whileHover={{ y: -4 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Appointment</p>
+              <p className="text-3xl font-bold text-foreground mt-2">
+                {analysisData?.appointmentsCount}
+              </p>
+              <p className="text-sm text-emerald-600 mt-1">+12%</p>
             </div>
-          </motion.div>
-        ))}
+            <div
+              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center`}
+            >
+              <Calendar className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
+          whileHover={{ y: -4 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Services</p>
+              <p className="text-3xl font-bold text-foreground mt-2">
+                {analysisData?.servicesCount}
+              </p>
+              <p className="text-sm text-emerald-600 mt-1">+3</p>
+            </div>
+            <div
+              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center`}
+            >
+              <Scissors className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
+          whileHover={{ y: -4 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Barbers</p>
+              <p className="text-3xl font-bold text-foreground mt-2">
+                {analysisData?.barberCount}
+              </p>
+              <p className="text-sm text-emerald-600 mt-1">+1</p>
+            </div>
+            <div
+              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center`}
+            >
+              <Users className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </motion.div>
+        <motion.div
+          className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-shadow"
+          whileHover={{ y: -4 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Revenue</p>
+              <p className="text-3xl font-bold text-foreground mt-2">
+                {analysisData?.revenue}
+              </p>
+              <p className="text-sm text-emerald-600 mt-1">+18%</p>
+            </div>
+            <div
+              className={`w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center`}
+            >
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+          </div>
+        </motion.div>
+
       </motion.div>
 
       {/* Quick Actions */}
@@ -237,9 +257,9 @@ export default function OwnerDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentAppointments.map((appointment, index) => (
+                {analysisData?.appointments.map((appointment, index) => (
                   <motion.tr
-                    key={appointment.id}
+                    key={index}
                     className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -247,17 +267,17 @@ export default function OwnerDashboard() {
                   >
                     <td className="px-6 py-4">
                       <span className="font-medium text-foreground">
-                        {appointment.customer}
+                        {appointment.customerName}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {appointment.service}
+                    <td className="px-6 py-4 text-muted-foreground space-x-2">
+                      {appointment.services.map((service, index) => <span key={index}>{service.servicesName},</span>)}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {appointment.barber}
+                      {appointment.barberName}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {appointment.time}
+                      {appointment.appointmentTime}
                     </td>
                     <td className="px-6 py-4">
                       <span

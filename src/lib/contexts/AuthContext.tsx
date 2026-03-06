@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const validateToken = async () => {
     try {
       let res = await axios.get('/api/auth/me');
-      console.log(res);
       setUser(res.data.data)
     } catch (error) {
       console.log(error)

@@ -26,7 +26,6 @@ export const SalonProvider = ({
 
     try {
       const res = await axios.get(`/api/owner/salon/${user.salonId}`);
-      console.log(res.data);
       setSalon(res.data.salon);
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -38,7 +37,6 @@ export const SalonProvider = ({
   };
 
   useEffect(() => {
-    console.log("user", user)
     refreshSalon();
   }, [user]);
 

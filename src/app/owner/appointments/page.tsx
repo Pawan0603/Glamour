@@ -1,5 +1,5 @@
 'use client';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Calendar,
@@ -19,6 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import { IAppointment } from "@/lib/interfaces";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -33,118 +36,23 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-interface Appointment {
-  id: number;
-  customer: string;
-  phone: string;
-  service: string;
-  barber: string;
-  date: string;
-  time: string;
-  duration: number;
-  price: number;
-  status: "pending" | "confirmed" | "completed" | "cancelled";
-}
-
-const appointmentsData: Appointment[] = [
-  {
-    id: 1,
-    customer: "Rahul Sharma",
-    phone: "+91 98765 43210",
-    service: "Haircut + Beard",
-    barber: "Amit Kumar",
-    date: "2025-01-02",
-    time: "10:00 AM",
-    duration: 45,
-    price: 450,
-    status: "confirmed",
-  },
-  {
-    id: 2,
-    customer: "Priya Singh",
-    phone: "+91 87654 32109",
-    service: "Hair Spa",
-    barber: "Neha Verma",
-    date: "2025-01-02",
-    time: "11:30 AM",
-    duration: 60,
-    price: 800,
-    status: "pending",
-  },
-  {
-    id: 3,
-    customer: "Vikram Patel",
-    phone: "+91 76543 21098",
-    service: "Shaving",
-    barber: "Raj Singh",
-    date: "2025-01-02",
-    time: "2:00 PM",
-    duration: 20,
-    price: 150,
-    status: "completed",
-  },
-  {
-    id: 4,
-    customer: "Anita Desai",
-    phone: "+91 65432 10987",
-    service: "Hair Color",
-    barber: "Neha Verma",
-    date: "2025-01-02",
-    time: "3:30 PM",
-    duration: 90,
-    price: 1200,
-    status: "confirmed",
-  },
-  {
-    id: 5,
-    customer: "Suresh Kumar",
-    phone: "+91 54321 09876",
-    service: "Facial",
-    barber: "Amit Kumar",
-    date: "2025-01-02",
-    time: "4:00 PM",
-    duration: 45,
-    price: 500,
-    status: "cancelled",
-  },
-  {
-    id: 6,
-    customer: "Meera Joshi",
-    phone: "+91 43210 98765",
-    service: "Manicure + Pedicure",
-    barber: "Priya Sharma",
-    date: "2025-01-03",
-    time: "10:00 AM",
-    duration: 60,
-    price: 700,
-    status: "pending",
-  },
-];
-
 const getStatusConfig = (status: string) => {
   switch (status) {
-    case "confirmed":
+    case "Scheduled":
       return {
         icon: CheckCircle,
         color: "text-blue-500",
         bg: "bg-blue-100 dark:bg-blue-900/30",
         text: "text-blue-700 dark:text-blue-400",
       };
-    case "completed":
+    case "Completed":
       return {
         icon: CheckCircle,
         color: "text-emerald-500",
         bg: "bg-emerald-100 dark:bg-emerald-900/30",
         text: "text-emerald-700 dark:text-emerald-400",
       };
-    case "pending":
-      return {
-        icon: AlertCircle,
-        color: "text-amber-500",
-        bg: "bg-amber-100 dark:bg-amber-900/30",
-        text: "text-amber-700 dark:text-amber-400",
-      };
-    case "cancelled":
+    case "Cancelled":
       return {
         icon: XCircle,
         color: "text-red-500",
@@ -164,22 +72,37 @@ const getStatusConfig = (status: string) => {
 export default function OwnerAppointments() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [appointments, setAppointments] = useState<IAppointment[]>([]);
 
-  const filteredAppointments = appointmentsData.filter((apt) => {
+  const filteredAppointments = appointments.filter((apt) => {
     const matchesFilter = filter === "all" || apt.status === filter;
     const matchesSearch =
-      apt.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      apt.barber.toLowerCase().includes(searchQuery.toLowerCase());
+      apt.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      // apt.service.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      apt.barberName.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
 
   const stats = {
-    total: appointmentsData.length,
-    pending: appointmentsData.filter((a) => a.status === "pending").length,
-    confirmed: appointmentsData.filter((a) => a.status === "confirmed").length,
-    completed: appointmentsData.filter((a) => a.status === "completed").length,
+    total: appointments.length,
+    pending: appointments.filter((a) => a.status === "Scheduled").length,
+    concelled: appointments.filter((a) => a.status === "Cancelled").length, // fix here
+    completed: appointments.filter((a) => a.status === "Completed").length,
   };
+
+  const getAppointments = async () => {
+    try {
+      const res = await axios.get("/api/owner/appointment/get-appointment");
+      setAppointments(res.data.data);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "Something went worng!");
+    }
+  }
+
+  useEffect(() => {
+    getAppointments();
+  }, []);
 
   return (
     <motion.div
@@ -206,7 +129,7 @@ export default function OwnerAppointments() {
         {[
           { label: "Total", value: stats.total, color: "from-primary to-primary/80" },
           { label: "Pending", value: stats.pending, color: "from-amber-500 to-amber-600" },
-          { label: "Confirmed", value: stats.confirmed, color: "from-blue-500 to-blue-600" },
+          { label: "Cancelled", value: stats.concelled, color: "from-blue-500 to-blue-600" },
           { label: "Completed", value: stats.completed, color: "from-emerald-500 to-emerald-600" },
         ].map((stat) => (
           <motion.div
@@ -242,10 +165,9 @@ export default function OwnerAppointments() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="Scheduled">Scheduled</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -259,7 +181,7 @@ export default function OwnerAppointments() {
 
           return (
             <motion.div
-              key={appointment.id}
+              key={appointment._id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.05 }}
@@ -272,21 +194,21 @@ export default function OwnerAppointments() {
                   <div>
                     <p className="text-sm text-muted-foreground">Customer</p>
                     <p className="font-semibold text-foreground">
-                      {appointment.customer}
+                      {appointment.customerName}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {appointment.phone}
+                      {/* {appointment.phone} */}999999999
                     </p>
                   </div>
 
                   {/* Service & Barber */}
                   <div>
                     <p className="text-sm text-muted-foreground">Service</p>
-                    <p className="font-semibold text-foreground">
-                      {appointment.service}
-                    </p>
+                    {appointment.services.map((service, index) => <p key={index} className="font-semibold text-foreground">
+                      {service.servicesName},
+                    </p>)}
                     <p className="text-sm text-muted-foreground">
-                      by {appointment.barber}
+                      by {appointment.barberName}
                     </p>
                   </div>
 
@@ -295,12 +217,12 @@ export default function OwnerAppointments() {
                     <p className="text-sm text-muted-foreground">Schedule</p>
                     <div className="flex items-center gap-2 text-foreground">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-medium">{appointment.date}</span>
+                      <span className="font-medium">{new Date(appointment.appointmentDate).toISOString().split("T")[0]}</span>
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground text-sm">
                       <Clock className="w-4 h-4" />
                       <span>
-                        {appointment.time} ({appointment.duration} mins)
+                        {appointment.appointmentTime} ({appointment.duration} mins)
                       </span>
                     </div>
                   </div>
@@ -316,25 +238,25 @@ export default function OwnerAppointments() {
 
                 {/* Status & Actions */}
                 <div className="flex items-center gap-3">
-                  <span
+                  {appointment.status !== "Scheduled" && <span
                     className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium capitalize ${statusConfig.bg} ${statusConfig.text}`}
                   >
                     <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
                     {appointment.status}
-                  </span>
+                  </span>}
 
-                  {appointment.status === "pending" && (
+                  {appointment.status === "Scheduled" && (
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">
+                      {/* <Button size="sm" variant="outline">
                         Confirm
-                      </Button>
+                      </Button> */}
                       <Button size="sm" variant="ghost" className="text-destructive">
                         Cancel
                       </Button>
                     </div>
                   )}
 
-                  {appointment.status === "confirmed" && (
+                  {appointment.status === "Scheduled" && (
                     <Button size="sm">Mark Complete</Button>
                   )}
                 </div>

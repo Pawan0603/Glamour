@@ -1,4 +1,4 @@
-import mongoose, {type Document, Schema} from "mongoose";
+import mongoose, {Schema} from "mongoose";
 import { IAppointment, Service } from "../interfaces";
 
 const AppointmentServicesSchema = new Schema<Service>({
@@ -67,6 +67,10 @@ const AppointmentSchema = new Schema<IAppointment>({
     duration: {
         type: Number,
         required: [true, "appointment duration is required."]
+    },
+    price: {
+        type: Number,
+        required: [true, "appointment price is required."]
     },
     services: [AppointmentServicesSchema],
     status: {

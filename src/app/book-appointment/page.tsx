@@ -120,7 +120,7 @@ export default function Page() {
       // console.log(res.data.data)
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
-      toast.error(err.response?.data.error || "somethin went worng.")
+      toast.error(err.response?.data.error || "something went worng.")
     }
   }
 
@@ -165,6 +165,7 @@ export default function Page() {
       appointmentDate: selectedDate!.toLocaleDateString("en-CA"),
       appointmentTime: selectedTime!,
       duration: serviceDuration,
+      price: totalPrice,
       services: selectedServices,
       status: "Scheduled",
     }

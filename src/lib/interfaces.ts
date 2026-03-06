@@ -85,6 +85,7 @@ export interface IAppointment {
   appointmentDate: Date;
   appointmentTime: string;
   duration: number;
+  price: number;
   services: Service[];
   status: "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
 }

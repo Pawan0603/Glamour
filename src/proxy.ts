@@ -9,7 +9,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  if (!cookies && (request.nextUrl.pathname.startsWith('/owner'))){
+  if (!cookies && (request.nextUrl.pathname.startsWith('/owner') || request.nextUrl.pathname.startsWith('/my-appointments'))){
     return NextResponse.redirect(new URL('/', request.url));
   }
 
@@ -45,5 +45,6 @@ export const config = {
     '/owner/:path*',
     '/register-salon/:path*',
     '/book-appointment/:path*',
+    '/my-appointments/:path*',
   ],
 }

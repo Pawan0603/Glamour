@@ -1,12 +1,12 @@
 'use client';
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { format } from "date-fns";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
   Scissors,
   ChevronRight,
   X,
@@ -27,91 +27,26 @@ import {
 import Footer from "@/components/Footer";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
+import { IAppointment } from "@/lib/interfaces";
 
-type AppointmentStatus = "booked" | "completed" | "cancelled";
-
-interface Appointment {
-  id: string;
-  salonName: string;
-  salonLocation: string;
-  serviceName: string;
-  barberName: string;
-  date: Date;
-  time: string;
-  price: number;
-  status: AppointmentStatus;
-}
-
-const mockAppointments: Appointment[] = [
-  {
-    id: "1",
-    salonName: "Elite Cuts Studio",
-    salonLocation: "Koramangala, Bangalore",
-    serviceName: "Haircut & Styling",
-    barberName: "Rahul Sharma",
-    date: new Date(2026, 0, 10),
-    time: "10:30 AM",
-    price: 500,
-    status: "booked",
-  },
-  {
-    id: "2",
-    salonName: "Glamour & Grace",
-    salonLocation: "Indiranagar, Bangalore",
-    serviceName: "Hair Coloring",
-    barberName: "Priya Patel",
-    date: new Date(2026, 0, 15),
-    time: "02:00 PM",
-    price: 1500,
-    status: "booked",
-  },
-  {
-    id: "3",
-    salonName: "Elite Cuts Studio",
-    salonLocation: "Koramangala, Bangalore",
-    serviceName: "Beard Trim",
-    barberName: "Arjun Kumar",
-    date: new Date(2025, 11, 20),
-    time: "11:00 AM",
-    price: 200,
-    status: "completed",
-  },
-  {
-    id: "4",
-    salonName: "The Gentlemen's Lounge",
-    salonLocation: "HSR Layout, Bangalore",
-    serviceName: "Keratin Treatment",
-    barberName: "Rahul Sharma",
-    date: new Date(2025, 11, 15),
-    time: "03:30 PM",
-    price: 3500,
-    status: "completed",
-  },
-  {
-    id: "5",
-    salonName: "Style Avenue",
-    salonLocation: "Whitefield, Bangalore",
-    serviceName: "Facial",
-    barberName: "Priya Patel",
-    date: new Date(2025, 11, 10),
-    time: "04:00 PM",
-    price: 800,
-    status: "cancelled",
-  },
-];
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
 
 const statusConfig: Record<AppointmentStatus, { label: string; className: string }> = {
-  booked: {
-    label: "Booked",
+  Scheduled: {
+    label: "Scheduled",
     className: "bg-blue-100 text-blue-700 border-blue-200",
   },
-  completed: {
+  Completed: {
     label: "Completed",
     className: "bg-green-100 text-green-700 border-green-200",
   },
-  cancelled: {
+  Cancelled: {
     label: "Cancelled",
     className: "bg-red-100 text-red-700 border-red-200",
+  },
+  Incomplete: {
+    label: "Cancelled",
+    className: "bg-yellow-100 text-red-700 border-red-200",
   },
 };
 
@@ -129,27 +64,63 @@ const itemVariants = {
 };
 
 const Page = () => {
-  const [appointments, setAppointments] = useState(mockAppointments);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointments, setAppointments] = useState<IAppointment[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<IAppointment | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  const upcomingAppointments = appointments.filter((a) => a.status === "booked");
-  const pastAppointments = appointments.filter((a) => a.status !== "booked");
+  const [upcomingAppointments, setUpcomingAppointments] = useState<IAppointment[]>([]);
+  const [pastAppointments, setPastAppointments] = useState<IAppointment[]>([]);
 
-  const handleCancelAppointment = () => {
+  const filterAppointment = (data: IAppointment[]) => {
+    setUpcomingAppointments(data?.filter(a => a.status === "Scheduled") || []);
+    setPastAppointments(data?.filter(a => a.status === "Cancelled" || a.status === "Completed") || [])
+  }
+
+  useEffect(() => {
+    if (appointments.length > 0) {
+      filterAppointment(appointments)
+    }
+  }, [appointments]);
+
+  const getAllAppointment = async () => {
+    try {
+      const res = await axios.get('/api/appointment/get-appointment');
+      console.log(res.data);
+      setAppointments(res.data.data);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "somethin went worng.")
+    }
+  }
+
+  useEffect(() => {
+    getAllAppointment();
+  }, []);
+
+  const handleCancelAppointment = async () => {
     if (selectedAppointment) {
-      setAppointments((prev) =>
-        prev.map((a) =>
-          a.id === selectedAppointment.id ? { ...a, status: "cancelled" as AppointmentStatus } : a
-        )
-      );
-      setShowCancelDialog(false);
-      setSelectedAppointment(null);
+      try {
+        console.log("selectedAppointemnt id: ", selectedAppointment._id)
+        const res = await axios.patch(`/api/appointment/${selectedAppointment._id}/cancel-appointment`);
+
+        setAppointments((prev) =>
+          prev.map((a) =>
+            a._id === selectedAppointment._id ? { ...a, status: "Cancelled" as AppointmentStatus } : a
+          )
+        );
+        setShowCancelDialog(false);
+        setSelectedAppointment(null);
+
+        toast.success(res.data.message || "appointment was cancelled.");
+      } catch (error) {
+        const err = error as AxiosError<{ error: string }>;
+        toast.error(err.response?.data.error || "Something went worng")
+      }
     }
   };
 
-  const AppointmentCard = ({ appointment }: { appointment: Appointment }) => (
+  const AppointmentCard = ({ appointment }: { appointment: IAppointment }) => (
     <motion.div
       variants={itemVariants}
       whileHover={{ scale: 1.01 }}
@@ -166,8 +137,8 @@ const Page = () => {
             </Badge>
           </div>
 
-          <h3 className="text-lg font-semibold text-foreground mb-1">
-            {appointment.serviceName}
+          <h3 className="text-lg font-semibold text-foreground mb-1 space-x-2">
+            {appointment.services.map((service, index) => <span key={index}>{service.servicesName}</span>)}
           </h3>
 
           <div className="space-y-2 text-sm text-muted-foreground">
@@ -177,7 +148,7 @@ const Page = () => {
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              <span>{appointment.salonLocation}</span>
+              <span>{appointment.city}</span>
             </div>
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -186,11 +157,11 @@ const Page = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                <span>{format(appointment.date, "PPP")}</span>
+                <span>{format(appointment.appointmentDate, "PPP")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                <span>{appointment.time}</span>
+                <span>{appointment.appointmentTime}</span>
               </div>
             </div>
           </div>
@@ -200,6 +171,7 @@ const Page = () => {
           <Button
             variant="outline"
             size="sm"
+            className="hover:cursor-pointer"
             onClick={() => {
               setSelectedAppointment(appointment);
               setShowDetailsDialog(true);
@@ -208,11 +180,11 @@ const Page = () => {
             View Details
             <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
-          {appointment.status === "booked" && (
+          {appointment.status === "Scheduled" && (
             <Button
               variant="ghost"
               size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:cursor-pointer"
               onClick={() => {
                 setSelectedAppointment(appointment);
                 setShowCancelDialog(true);
@@ -297,7 +269,7 @@ const Page = () => {
                     className="space-y-4"
                   >
                     {upcomingAppointments.map((appointment) => (
-                      <AppointmentCard key={appointment.id} appointment={appointment} />
+                      <AppointmentCard key={appointment._id} appointment={appointment} />
                     ))}
                   </motion.div>
                 ) : (
@@ -314,7 +286,7 @@ const Page = () => {
                     className="space-y-4"
                   >
                     {pastAppointments.map((appointment) => (
-                      <AppointmentCard key={appointment.id} appointment={appointment} />
+                      <AppointmentCard key={appointment._id} appointment={appointment} />
                     ))}
                   </motion.div>
                 ) : (
@@ -339,15 +311,16 @@ const Page = () => {
             <div className="py-4 space-y-2 text-sm">
               <p>
                 <span className="text-muted-foreground">Service:</span>{" "}
-                <span className="font-medium">{selectedAppointment.serviceName}</span>
+                {selectedAppointment.services.map((service, index) => <span key={index} className="font-medium">{service.servicesName}</span>)}
+
               </p>
               <p>
                 <span className="text-muted-foreground">Date:</span>{" "}
-                <span className="font-medium">{format(selectedAppointment.date, "PPP")}</span>
+                <span className="font-medium">{format(selectedAppointment.appointmentDate, "PPP")}</span>
               </p>
               <p>
                 <span className="text-muted-foreground">Time:</span>{" "}
-                <span className="font-medium">{selectedAppointment.time}</span>
+                <span className="font-medium">{selectedAppointment.appointmentTime}</span>
               </p>
             </div>
           )}
@@ -382,7 +355,7 @@ const Page = () => {
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Service</span>
-                  <span className="font-medium">{selectedAppointment.serviceName}</span>
+                  {selectedAppointment.services.map((service, index) => <span key={index} className="font-medium">{service.servicesName}</span>)}
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Salon</span>
@@ -390,7 +363,7 @@ const Page = () => {
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Location</span>
-                  <span className="font-medium text-right">{selectedAppointment.salonLocation}</span>
+                  <span className="font-medium text-right">{selectedAppointment.city}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Barber</span>
@@ -398,11 +371,11 @@ const Page = () => {
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Date</span>
-                  <span className="font-medium">{format(selectedAppointment.date, "PPP")}</span>
+                  <span className="font-medium">{format(selectedAppointment.appointmentDate, "PPP")}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                   <span className="text-muted-foreground">Time</span>
-                  <span className="font-medium">{selectedAppointment.time}</span>
+                  <span className="font-medium">{selectedAppointment.appointmentTime}</span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span className="text-muted-foreground">Price</span>

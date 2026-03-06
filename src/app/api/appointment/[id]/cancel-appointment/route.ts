@@ -17,8 +17,8 @@ async function cancelAppointment(req: AuthenticatedRequest, context: RouteContex
 
         if (!id) return NextResponse.json({ success: false, error: "Appointment Id was not recived!" }, { status: 404 });
 
-        const updatedAppointment = await AppointmentModel.findByIdAndUpdate(
-            id,
+        const updatedAppointment = await AppointmentModel.findOneAndUpdate(
+            { _id: id, customerId: user.userId },
             { status: "Cancelled" },
             { new: true }
         );

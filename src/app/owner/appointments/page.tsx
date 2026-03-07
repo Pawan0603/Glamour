@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
 import {
   Calendar,
   Clock,
@@ -22,6 +23,8 @@ import {
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { IAppointment } from "@/lib/interfaces";
+import { Spinner } from "@/components/ui/spinner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -69,10 +72,16 @@ const getStatusConfig = (status: string) => {
   }
 };
 
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
+
 export default function OwnerAppointments() {
   const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [appointments, setAppointments] = useState<IAppointment[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<IAppointment | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState<boolean>(false);
+  const [showCompletedialog, setShowCompletedialog] = useState<boolean>(false);
+  const [isAppointmentStatusChanging, setIsAppointmentStatusChanging] = useState<boolean>(false);
 
   const filteredAppointments = appointments.filter((apt) => {
     const matchesFilter = filter === "all" || apt.status === filter;
@@ -103,6 +112,44 @@ export default function OwnerAppointments() {
   useEffect(() => {
     getAppointments();
   }, []);
+
+  const updateStatus = (id: string, newStatus: AppointmentStatus) => {
+    setAppointments((prev) =>
+      prev.map((appt) =>
+        appt._id === id ? { ...appt, status: newStatus } : appt
+      )
+    );
+  };
+
+  const cancelAppointment = async (_id: string) => {
+    try {
+      setIsAppointmentStatusChanging(true);
+      const res = await axios.patch(`/api/owner/appointment/${_id}/cancel-appointment`);
+      updateStatus(_id, "Cancelled");
+      toast.success(res.data.message);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "Something went worng!");
+    } finally {
+      setShowCancelDialog(false);
+      setIsAppointmentStatusChanging(false);
+    }
+  }
+
+  const completeAppointment = async (_id: string) => {
+    try {
+      setIsAppointmentStatusChanging(true);
+      const res = await axios.patch(`/api/owner/appointment/${_id}/complete-appointment`);
+      updateStatus(_id, "Completed");
+      toast.success(res.data.message);
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "Something went worng!");
+    } finally {
+      setIsAppointmentStatusChanging(false);
+      setShowCompletedialog(false);
+    }
+  }
 
   return (
     <motion.div
@@ -250,15 +297,16 @@ export default function OwnerAppointments() {
                       {/* <Button size="sm" variant="outline">
                         Confirm
                       </Button> */}
-                      <Button size="sm" variant="ghost" className="text-destructive">
+                      <Button  onClick={() => {setSelectedAppointment(appointment); setShowCancelDialog(true)}} size="sm" variant="ghost" className="text-destructive hover:cursor-pointer">
                         Cancel
                       </Button>
                     </div>
                   )}
 
                   {appointment.status === "Scheduled" && (
-                    <Button size="sm">Mark Complete</Button>
+                    <Button className="hover:cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompletedialog(true) }} size="sm">Mark Complete</Button>
                   )}
+
                 </div>
               </div>
             </motion.div>
@@ -272,6 +320,86 @@ export default function OwnerAppointments() {
           </div>
         )}
       </motion.div>
+
+      {/* Cancel Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Appointment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this appointment? This action cannot be undone.  if you cancel this appointment client get 100% cash back.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="py-4 space-y-2 text-sm">
+              <p>
+                <span className="text-muted-foreground">Service:</span>{" "}
+                {selectedAppointment.services.map((service, index) => <span key={index} className="font-medium">{service.servicesName}</span>)}
+
+              </p>
+              <p>
+                <span className="text-muted-foreground">Date:</span>{" "}
+                <span className="font-medium">{format(selectedAppointment.appointmentDate, "PPP")}</span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Time:</span>{" "}
+                <span className="font-medium">{selectedAppointment.appointmentTime}</span>
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button className="hover:cursor-pointer" variant="outline" onClick={() => setShowCancelDialog(false)}>
+              Keep Appointment
+            </Button>
+            <Button className="hover:cursor-pointer" variant="destructive" disabled={isAppointmentStatusChanging} onClick={() => cancelAppointment(selectedAppointment?._id!)}>
+              {isAppointmentStatusChanging ? <>
+                <Spinner data-icon="inline-start" />
+                Please wait
+              </> : <>Cancel Appointment</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Complete Dialog */}
+      <Dialog open={showCompletedialog} onOpenChange={setShowCompletedialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Completed appointment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to mark as a completed this appointment?
+            </DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="py-4 space-y-2 text-sm">
+              <p>
+                <span className="text-muted-foreground">Service:</span>{" "}
+                {selectedAppointment.services.map((service, index) => <span key={index} className="font-medium">{service.servicesName}</span>)}
+
+              </p>
+              <p>
+                <span className="text-muted-foreground">Date:</span>{" "}
+                <span className="font-medium">{format(selectedAppointment.appointmentDate, "PPP")}</span>
+              </p>
+              <p>
+                <span className="text-muted-foreground">Time:</span>{" "}
+                <span className="font-medium">{selectedAppointment.appointmentTime}</span>
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button className="hover:cursor-pointer" variant="outline" onClick={() => setShowCompletedialog(false)}>
+              Keep Appointment
+            </Button>
+            <Button className="bg-green-500 hover:bg-green-600 hover:cursor-pointer" disabled={isAppointmentStatusChanging} onClick={() => completeAppointment(selectedAppointment?._id!)}>
+              {isAppointmentStatusChanging ? <>
+                <Spinner data-icon="inline-start" />
+                Please wait
+              </> : <>Complete Appointment</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.div>
   );
 }

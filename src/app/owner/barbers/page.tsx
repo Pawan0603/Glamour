@@ -13,6 +13,7 @@ import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import Image from "next/image";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -26,58 +27,6 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
-
-interface Barber {
-  id: number;
-  name: string;
-  experience: number;
-  services: string[];
-  avatar: string;
-}
-
-const availableServices = [
-  "Haircut",
-  "Beard Trim",
-  "Hair Spa",
-  "Facial",
-  "Hair Color",
-  "Manicure",
-  "Pedicure",
-  "Shaving",
-  "Head Massage",
-  "Waxing",
-];
-
-const initialBarbers: Barber[] = [
-  {
-    id: 1,
-    name: "Amit Kumar",
-    experience: 5,
-    services: ["Haircut", "Beard Trim", "Shaving"],
-    avatar: "AK",
-  },
-  {
-    id: 2,
-    name: "Neha Verma",
-    experience: 7,
-    services: ["Hair Spa", "Hair Color", "Facial"],
-    avatar: "NV",
-  },
-  {
-    id: 3,
-    name: "Raj Singh",
-    experience: 3,
-    services: ["Haircut", "Shaving", "Head Massage"],
-    avatar: "RS",
-  },
-  {
-    id: 4,
-    name: "Priya Sharma",
-    experience: 4,
-    services: ["Manicure", "Pedicure", "Waxing"],
-    avatar: "PS",
-  },
-];
 
 export default function Page() {
   const { user } = useAuth();
@@ -93,17 +42,18 @@ export default function Page() {
     url: "",
     publicId: "",
   });
+  const [isFormSubmitting, setIsFormSubmitting] = useState<boolean>(false);
 
   const handleAddBarber = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.experience) return;
 
-    if(formData.services.length === 0) {
+    if (formData.services.length === 0) {
       toast.warning("Please assign at list 1 services.");
       return;
     }
 
-    if(avatar.publicId === "" || avatar.url === ""){
+    if (avatar.publicId === "" || avatar.url === "") {
       toast.warning("Please upload barber image.");
       return;
     }
@@ -115,9 +65,8 @@ export default function Page() {
       avatar: avatar
     }
 
-    console.log(barberData)
-
     try {
+      setIsFormSubmitting(true);
       const res = await axios.patch(`/api/owner/salon/${user?.salonId}/add-barber`, barberData, {
         headers: {
           'Content-Type': 'application/json',
@@ -137,6 +86,8 @@ export default function Page() {
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
+    } finally {
+      setIsFormSubmitting(false);
     }
   };
 
@@ -270,7 +221,9 @@ export default function Page() {
               </div>
 
               <div className="flex gap-3 mt-6">
-                <Button type="submit">Add Barber</Button>
+                <Button type="submit" disabled={isFormSubmitting}>
+                  {isFormSubmitting ? <> <Spinner data-icon="inline-start" /> Please wait </> : <> Add Barber </>}
+                </Button>
                 <Button variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>
@@ -317,16 +270,16 @@ export default function Page() {
                     >
                       <Edit2 className="w-4 h-4" />
                     </motion.button>
-                    
+
                     <Dialog>
                       <DialogTrigger asChild>
                         <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </motion.button>
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </motion.button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
@@ -337,7 +290,7 @@ export default function Page() {
                           </DialogDescription>
                           <div className="sm:justify-start space-x-2">
                             <DialogClose asChild>
-                              <Button type="button" className="cursor-pointer" onClick={() =>  handleDeleteBarber(barber._id)}>Delete</Button>
+                              <Button type="button" className="cursor-pointer" onClick={() => handleDeleteBarber(barber._id)}>Delete</Button>
                             </DialogClose>
                             <DialogClose asChild>
                               <Button variant={'outline'} type="button" className="cursor-pointer">Close</Button>

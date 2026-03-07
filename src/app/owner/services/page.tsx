@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/contexts/AuthContext";
 import { useSalon } from "@/lib/contexts/SalonContext";
 import { Service } from "@/lib/interfaces";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -45,6 +46,7 @@ export default function Page() {
     price: "",
     duration: "",
   });
+  const [isFormSubmitting, setIsFormSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (salon?.services) {
@@ -66,6 +68,7 @@ export default function Page() {
     }
 
     try {
+      setIsFormSubmitting(true);
       const res = await axios.patch(`/api/owner/salon/${user?.salonId}/add-service`, serviceData, {
         headers: {
           'Content-Type': 'application/json',
@@ -78,6 +81,8 @@ export default function Page() {
     } catch (err) {
       const error = err as AxiosError<{ error: string }>
       toast.error(error.response?.data.error || "⚠️ Somethin went worng.")
+    } finally {
+      setIsFormSubmitting(false);
     }
   };
 
@@ -199,7 +204,9 @@ export default function Page() {
                 </div>
               </div>
               <div className="flex gap-3 mt-6">
-                <Button type="submit">Add Service</Button>
+                <Button type="submit" disabled={isFormSubmitting}>
+                  {isFormSubmitting ? <> <Spinner data-icon="inline-start" /> Please wait </> : <> Add Barber </>}
+                </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancel
                 </Button>

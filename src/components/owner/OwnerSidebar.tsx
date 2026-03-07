@@ -46,7 +46,7 @@ export function OwnerSidebar() {
           initial={false}
           animate={{ justifyContent: isCollapsed && !mobile ? "center" : "flex-start" }}
         >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-xl bg-linear-to-br from-primary to-primary/80 flex items-center justify-center">
             <Scissors className="w-5 h-5 text-primary-foreground" />
           </div>
           <AnimatePresence>
@@ -76,7 +76,7 @@ export function OwnerSidebar() {
             >
               <motion.div
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative",
+                  "flex items-center gap-3 px-3 py-3 rounded-xl transition-colors relative",
                   isActive
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -84,7 +84,7 @@ export function OwnerSidebar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <item.icon className="w-5 h-5 shrink-0" />
                 <AnimatePresence>
                   {(!isCollapsed || mobile) && (
                     <motion.span
@@ -114,7 +114,7 @@ export function OwnerSidebar() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <LogOut className="w-5 h-5 flex-shrink-0" />
+          <LogOut className="w-5 h-5 shrink-0" />
           <AnimatePresence>
             {(!isCollapsed || mobile) && (
               <motion.span
@@ -171,7 +171,7 @@ export function OwnerSidebar() {
           <Menu className="w-6 h-6" />
         </Button>
         <div className="flex items-center gap-2 ml-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-primary to-primary/80 flex items-center justify-center">
             <Scissors className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-display text-lg font-semibold">Glamour</span>
@@ -190,7 +190,7 @@ export function OwnerSidebar() {
               onClick={() => setIsMobileOpen(false)}
             />
             <motion.aside
-              className="lg:hidden fixed left-0 top-0 bottom-0 w-[280px] sm:w-72 bg-card z-50 safe-top safe-bottom"
+              className="lg:hidden fixed left-0 top-0 bottom-0 w-70 sm:w-72 bg-card z-50 safe-top safe-bottom"
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}

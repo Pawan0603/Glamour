@@ -1,7 +1,6 @@
 'use client';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-// import { NavLink, useLocation } from "react-router-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/contexts/AuthContext";
 
 const navItems = [
   { title: "Dashboard", href: "/owner/dashboard", icon: LayoutDashboard },
@@ -27,6 +27,7 @@ const navItems = [
 ];
 
 export function OwnerSidebar() {
+  const { logout } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = usePathname();
@@ -39,7 +40,7 @@ export function OwnerSidebar() {
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-border">
+      <Link href={'/'} className="p-6 border-b border-border">
         <motion.div
           className="flex items-center gap-3"
           initial={false}
@@ -61,7 +62,7 @@ export function OwnerSidebar() {
             )}
           </AnimatePresence>
         </motion.div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2">
@@ -105,8 +106,9 @@ export function OwnerSidebar() {
       {/* Footer */}
       <div className="p-4 border-t border-border">
         <motion.button
+          onClick={logout}
           className={cn(
-            "flex items-center gap-3 px-4 py-3 rounded-xl w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
+            "flex items-center gap-3 px-4 py-3 rounded-xl w-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors hover:cursor-pointer",
             isCollapsed && !mobile && "justify-center"
           )}
           whileHover={{ scale: 1.02 }}
@@ -141,7 +143,7 @@ export function OwnerSidebar() {
         transition={{ duration: 0.25, ease: "easeInOut" }}
       >
         <SidebarContent />
-        
+
         {/* Collapse Toggle */}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}

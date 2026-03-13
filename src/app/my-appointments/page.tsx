@@ -263,9 +263,9 @@ const Page = () => {
               <TabsContent value="upcoming">
                 {upcomingAppointments.length > 0 ? (
                   <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
+                    // variants={containerVariants}
+                    // initial="hidden"
+                    // animate="visible"
                     className="space-y-4"
                   >
                     {upcomingAppointments.map((appointment) => (
@@ -280,9 +280,9 @@ const Page = () => {
               <TabsContent value="past">
                 {pastAppointments.length > 0 ? (
                   <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
+                    // variants={containerVariants}
+                    // initial="hidden"
+                    // animate="visible"
                     className="space-y-4"
                   >
                     {pastAppointments.map((appointment) => (

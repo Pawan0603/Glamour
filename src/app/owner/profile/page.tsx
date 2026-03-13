@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useSalon } from "@/lib/contexts/SalonContext";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -33,6 +34,8 @@ const itemVariants = {
 const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export default function OwnerProfile() {
+  const { salon } = useSalon();
+
   const [salonData, setSalonData] = useState({
     name: "Glamour Beauty Lounge",
     category: "Unisex",
@@ -74,6 +77,8 @@ export default function OwnerProfile() {
   const removeImage = (index: number) => {
     setSalonImages(salonImages.filter((_, i) => i !== index));
   };
+
+  if(!salon) return;
 
   return (
     <motion.div
@@ -144,7 +149,7 @@ export default function OwnerProfile() {
             <Label htmlFor="salonName">Salon Name</Label>
             <Input
               id="salonName"
-              value={salonData.name}
+              value={salon?.salonName}
               onChange={(e) =>
                 setSalonData({ ...salonData, name: e.target.value })
               }
@@ -154,7 +159,7 @@ export default function OwnerProfile() {
             <Label htmlFor="category">Category</Label>
             <Input
               id="category"
-              value={salonData.category}
+              value={salon?.salonCategory}
               onChange={(e) =>
                 setSalonData({ ...salonData, category: e.target.value })
               }
@@ -167,7 +172,7 @@ export default function OwnerProfile() {
             </Label>
             <Input
               id="phone"
-              value={salonData.phone}
+              value={salon?.phoneNumber}
               onChange={(e) =>
                 setSalonData({ ...salonData, phone: e.target.value })
               }
@@ -181,7 +186,7 @@ export default function OwnerProfile() {
             <Input
               id="email"
               type="email"
-              value={salonData.email}
+              value={salon?.email}
               onChange={(e) =>
                 setSalonData({ ...salonData, email: e.target.value })
               }
@@ -192,7 +197,7 @@ export default function OwnerProfile() {
             <Textarea
               id="description"
               rows={3}
-              value={salonData.description}
+              value={salon?.description}
               onChange={(e) =>
                 setSalonData({ ...salonData, description: e.target.value })
               }
@@ -215,7 +220,7 @@ export default function OwnerProfile() {
             <Label htmlFor="address">Address</Label>
             <Input
               id="address"
-              value={salonData.address}
+              value={salon?.fullAddress}
               onChange={(e) =>
                 setSalonData({ ...salonData, address: e.target.value })
               }
@@ -225,7 +230,7 @@ export default function OwnerProfile() {
             <Label htmlFor="city">City</Label>
             <Input
               id="city"
-              value={salonData.city}
+              value={salon?.city}
               onChange={(e) =>
                 setSalonData({ ...salonData, city: e.target.value })
               }
@@ -235,7 +240,7 @@ export default function OwnerProfile() {
             <Label htmlFor="area">Area / Landmark</Label>
             <Input
               id="area"
-              value={salonData.area}
+              value={salon?.area_landmark}
               onChange={(e) =>
                 setSalonData({ ...salonData, area: e.target.value })
               }
@@ -245,7 +250,7 @@ export default function OwnerProfile() {
             <Label htmlFor="pincode">Pincode</Label>
             <Input
               id="pincode"
-              value={salonData.pincode}
+              value={salon?.pincode}
               onChange={(e) =>
                 setSalonData({ ...salonData, pincode: e.target.value })
               }
@@ -269,7 +274,7 @@ export default function OwnerProfile() {
             <Input
               id="openingTime"
               type="time"
-              value={salonData.openingTime}
+              value={salon?.openingTime}
               onChange={(e) =>
                 setSalonData({ ...salonData, openingTime: e.target.value })
               }
@@ -280,7 +285,7 @@ export default function OwnerProfile() {
             <Input
               id="closingTime"
               type="time"
-              value={salonData.closingTime}
+              value={salon?.closingTime}
               onChange={(e) =>
                 setSalonData({ ...salonData, closingTime: e.target.value })
               }
@@ -297,9 +302,9 @@ export default function OwnerProfile() {
                 onClick={() => toggleDay(day)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${workingDays.includes(day)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${salon?.weeklyAvailabity.includes(day)
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
                   }`}
               >
                 {day}
@@ -307,6 +312,43 @@ export default function OwnerProfile() {
             ))}
           </div>
         </div>
+      </motion.div>
+
+      {/* Salon Cover Image */}
+      <motion.div
+        variants={itemVariants}
+        className="bg-card rounded-2xl border border-border p-6 shadow-sm"
+      >
+        <h2 className="text-lg font-semibold text-foreground mb-6">
+          Salon Cover Image
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative aspect-square rounded-xl overflow-hidden group"
+          >
+            <img
+              src={salon?.salonCoverImage}
+              alt={`Salon cover image`}
+              className="w-full h-full object-cover"
+            />
+          </motion.div>
+
+          {/* Upload Button */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 flex flex-col items-center justify-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+          >
+            <Upload className="w-8 h-8" />
+            <span className="text-sm font-medium">Change Image</span>
+          </motion.button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Upload up to 10 images. JPG or PNG. Max 5MB each.
+        </p>
       </motion.div>
 
       {/* Salon Images */}
@@ -318,7 +360,7 @@ export default function OwnerProfile() {
           Salon Images
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-          {salonImages.map((image, index) => (
+          {salon.salonImages?.map((image, index) => (
             <motion.div
               key={index}
               layout

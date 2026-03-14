@@ -1,10 +1,7 @@
 import connectDB from "@/lib/connectDB";
 import SalonModel from "@/lib/models/salon";
 import { NextResponse, type NextRequest } from "next/server";
-
-interface RouteContext {
-    params: Promise<{ id: string }>;
-}
+import { RouteContext } from "@/lib/interfaces";
 
 export async function GET(req: NextRequest, context: RouteContext) {
     await connectDB();

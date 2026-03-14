@@ -7,7 +7,8 @@ export interface AuthenticatedRequest extends NextRequest {
 
 interface RouteContext {
   // params?: Record<string, string | string[]>;
-  params: Promise<{ id: string }>;
+  // params: Promise<{ id: string }>; // not working on vercel deployment
+  params: Promise<Record<string, string>>
 }
 
 export function withAuth(handler: (req: AuthenticatedRequest, context: RouteContext) => Promise<NextResponse>) {

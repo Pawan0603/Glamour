@@ -89,3 +89,9 @@ export interface IAppointment {
   services: Service[];
   status: "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
 }
+
+
+// =========================== API RouteContext ============
+export interface RouteContext {
+  params: Promise<Record<string, string>>
+}

@@ -2,10 +2,7 @@ import { AuthenticatedRequest, withOwnerAuth } from "@/lib/auth/middleware";
 import connectDB from "@/lib/connectDB";
 import AppointmentModel from "@/lib/models/appointment";
 import { NextResponse } from "next/server";
-
-interface RouteContext {
-    params: Promise<{ id: string }>;
-}
+import { RouteContext } from "@/lib/interfaces";
 
 async function cancelAppointment(req: AuthenticatedRequest, context: RouteContext) {
     await connectDB();

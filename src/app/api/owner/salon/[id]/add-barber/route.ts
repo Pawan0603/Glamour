@@ -3,10 +3,7 @@ import connectDB from "@/lib/connectDB";
 import { Barber } from "@/lib/interfaces";
 import SalonModel from "@/lib/models/salon";
 import { NextResponse } from "next/server";
-
-interface RouteContext {
-    params: Promise<{ id: string }>;
-}
+import { RouteContext } from "@/lib/interfaces";
 
 async function addServiceHandler(
     req: AuthenticatedRequest,

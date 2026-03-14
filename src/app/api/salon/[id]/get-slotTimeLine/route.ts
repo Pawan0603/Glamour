@@ -3,10 +3,7 @@ import { getBusySlots } from "@/lib/booking/getBusySlots";
 import connectDB from "@/lib/connectDB";
 import AppointmentModel from "@/lib/models/appointment";
 import { NextResponse } from "next/server";
-
-interface RouteContext {
-  params: Promise<{ id: string }>;
-}
+import { RouteContext } from "@/lib/interfaces";
 
 async function getSlotTimeLine(req: AuthenticatedRequest, context: RouteContext) {
   await connectDB();

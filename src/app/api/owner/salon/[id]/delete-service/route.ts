@@ -2,10 +2,7 @@ import { AuthenticatedRequest, withOwnerAuth } from "@/lib/auth/middleware";
 import connectDB from "@/lib/connectDB";
 import SalonModel from "@/lib/models/salon";
 import { NextResponse } from "next/server";
-
-interface RouteContext {
-    params: Promise<{ id: string }>; // This 'id' is the Salon ID
-}
+import { RouteContext } from "@/lib/interfaces";
 
 async function deleteServiceHandler(
     req: AuthenticatedRequest,

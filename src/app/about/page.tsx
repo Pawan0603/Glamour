@@ -13,8 +13,8 @@ const stats = [
 
 const team = [
   { name: "Pawan Thakre", role: "Founder & CEO", img: "/pawan3.jpg" },
-  { name: "Ashawin Wadaskar", role: "Head of Product", img: "ashwin.png" },
-  { name: "Priya Sharma", role: "Lead Designer", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face" },
+  { name: "Ashwin Wadaskar", role: " Co-founder", img: "ashwin.png" },
+  { name: "Achal Sharma", role: "Lead Designer", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&crop=face" },
   { name: "David Kim", role: "Engineering Lead", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face" },
 ];
 

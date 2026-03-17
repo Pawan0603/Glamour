@@ -24,7 +24,7 @@ export default function HeroSection() {
       </div>
 
       {/* Decorative Elements */}
-      <motion.div
+      {/* <motion.div
         className="absolute top-1/4 left-4 md:left-10 w-48 md:w-72 h-48 md:h-72 rounded-full bg-primary/10 blur-3xl"
         animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -33,7 +33,7 @@ export default function HeroSection() {
         className="absolute bottom-1/4 right-4 md:right-10 w-64 md:w-96 h-64 md:h-96 rounded-full bg-accent/10 blur-3xl"
         animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.5, 0.3] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
+      /> */}
 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="max-w-4xl mx-auto text-center">

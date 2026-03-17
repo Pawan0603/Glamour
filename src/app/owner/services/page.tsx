@@ -205,7 +205,7 @@ export default function Page() {
               </div>
               <div className="flex gap-3 mt-6">
                 <Button type="submit" disabled={isFormSubmitting}>
-                  {isFormSubmitting ? <> <Spinner data-icon="inline-start" /> Please wait </> : <> Add Barber </>}
+                  {isFormSubmitting ? <> <Spinner data-icon="inline-start" /> Please wait </> : <> Add Service </>}
                 </Button>
                 <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
                   Cancel

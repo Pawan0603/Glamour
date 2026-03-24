@@ -45,22 +45,29 @@ const getStatusConfig = (status: string) => {
       return {
         icon: CheckCircle,
         color: "text-blue-500",
-        bg: "bg-blue-100 dark:bg-blue-900/30",
+        bg: "bg-blue-100 dark:bg-blue-500/30",
         text: "text-blue-700 dark:text-blue-400",
       };
     case "Completed":
       return {
         icon: CheckCircle,
         color: "text-emerald-500",
-        bg: "bg-emerald-100 dark:bg-emerald-900/30",
+        bg: "bg-emerald-100 dark:bg-emerald-500/30",
         text: "text-emerald-700 dark:text-emerald-400",
       };
     case "Cancelled":
       return {
         icon: XCircle,
         color: "text-red-500",
-        bg: "bg-red-100 dark:bg-red-900/30",
+        bg: "bg-red-100 dark:bg-red-500/30",
         text: "text-red-700 dark:text-red-400",
+      };
+    case "Reschedule":
+      return {
+        icon: XCircle,
+        color: "text-yellow-500",
+        bg: "bg-yellow-500 dark:bg-yellow-500/10",
+        text: "text-yellow-700 dark:text-yellow-400",
       };
     default:
       return {
@@ -72,7 +79,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule";
 
 export default function OwnerAppointments() {
   const [filter, setFilter] = useState("all");
@@ -213,6 +220,7 @@ export default function OwnerAppointments() {
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="Scheduled">Scheduled</SelectItem>
+              <SelectItem value="Reschedule">Reschedule</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
               <SelectItem value="Completed">Completed</SelectItem>
             </SelectContent>
@@ -261,7 +269,7 @@ export default function OwnerAppointments() {
 
                   {/* Date & Time */}
                   <div>
-                    <p className="text-sm text-muted-foreground">Schedule</p>
+                    <p className="text-sm text-muted-foreground">{appointment.status === "Reschedule" ? "Reschedule" : "Schedule"}</p>
                     <div className="flex items-center gap-2 text-foreground">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <span className="font-medium">{new Date(appointment.appointmentDate).toISOString().split("T")[0]}</span>
@@ -285,7 +293,7 @@ export default function OwnerAppointments() {
 
                 {/* Status & Actions */}
                 <div className="flex items-center gap-3">
-                  {appointment.status !== "Scheduled" && <span
+                  {appointment.status !== "Scheduled" && appointment.status !== "Reschedule" && <span
                     className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium capitalize ${statusConfig.bg} ${statusConfig.text}`}
                   >
                     <StatusIcon className={`w-4 h-4 ${statusConfig.color}`} />
@@ -304,6 +312,21 @@ export default function OwnerAppointments() {
                   )}
 
                   {appointment.status === "Scheduled" && (
+                    <Button className="hover:cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompletedialog(true) }} size="sm">Mark Complete</Button>
+                  )}
+
+                  {appointment.status === "Reschedule" && (
+                    <div className="flex gap-2">
+                      {/* <Button size="sm" variant="outline">
+                        Confirm
+                      </Button> */}
+                      <Button  onClick={() => {setSelectedAppointment(appointment); setShowCancelDialog(true)}} size="sm" variant="ghost" className="text-destructive hover:cursor-pointer">
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+
+                  {appointment.status === "Reschedule" && (
                     <Button className="hover:cursor-pointer" onClick={() => { setSelectedAppointment(appointment); setShowCompletedialog(true) }} size="sm">Mark Complete</Button>
                   )}
 

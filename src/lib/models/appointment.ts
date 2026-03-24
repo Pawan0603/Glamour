@@ -75,7 +75,7 @@ const AppointmentSchema = new Schema<IAppointment>({
     services: [AppointmentServicesSchema],
     status: {
         type: String,
-        enum: ["Scheduled", "Completed", "Cancelled", " Incomplete"],
+        enum: ["Scheduled", "Completed", "Cancelled", " Incomplete", "Reschedule"],
         default: "Scheduled"
     }
 }, {timestamps: true});

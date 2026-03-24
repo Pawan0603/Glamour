@@ -33,11 +33,13 @@ const itemVariants = {
 
 const getStatusIcon = (status: string) => {
   switch (status) {
-    case "completed":
+    case "Completed":
       return <CheckCircle className="w-4 h-4 text-emerald-500" />;
-    case "pending":
+    case "Scheduled":
       return <Clock className="w-4 h-4 text-amber-500" />;
-    case "cancelled":
+    case "Reschedule":
+      return <Clock className="w-4 h-4 text-amber-500" />;
+    case "Cancelled":
       return <XCircle className="w-4 h-4 text-destructive" />;
     default:
       return null;
@@ -48,6 +50,7 @@ const getStatusBadge = (status: string) => {
   const styles = {
     Completed: "text-emerald-700 dark:text-emerald-400",
     Scheduled: "text-amber-700 dark:text-amber-400",
+    Reschedule: "text-yellow-700 dark:text-yellow-400",
     Cancelled: "text-red-700 dark:text-red-400",
   };
   return styles[status as keyof typeof styles] || "";

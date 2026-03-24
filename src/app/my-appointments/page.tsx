@@ -28,11 +28,16 @@ import Footer from "@/components/Footer";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { IAppointment } from "@/lib/interfaces";
+import Link from "next/link";
 
-type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete";
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule";
 
 const statusConfig: Record<AppointmentStatus, { label: string; className: string }> = {
   Scheduled: {
+    label: "Scheduled",
+    className: "bg-blue-100 text-blue-700 border-blue-200",
+  },
+  Reschedule: {
     label: "Scheduled",
     className: "bg-blue-100 text-blue-700 border-blue-200",
   },
@@ -73,7 +78,7 @@ const Page = () => {
   const [pastAppointments, setPastAppointments] = useState<IAppointment[]>([]);
 
   const filterAppointment = (data: IAppointment[]) => {
-    setUpcomingAppointments(data?.filter(a => a.status === "Scheduled") || []);
+    setUpcomingAppointments(data?.filter(a => a.status === "Scheduled" || a.status === "Reschedule") || []);
     setPastAppointments(data?.filter(a => a.status === "Cancelled" || a.status === "Completed") || [])
   }
 
@@ -177,12 +182,28 @@ const Page = () => {
               setShowDetailsDialog(true);
             }}
           >
-            View Details
-            <ChevronRight className="w-4 h-4 ml-1" />
+            View
+            <ChevronRight className="w-4 h-4" />
           </Button>
           {appointment.status === "Scheduled" && (
+            <Link href={`/reschedule-appointment?salonId=${appointment.salonId}&appointmentId=${appointment._id}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-green-500 hover:text-green-700 hover:bg-destructive/10 hover:cursor-pointer"
+                onClick={() => {
+                  setSelectedAppointment(appointment);
+                  setShowCancelDialog(true);
+                }}
+              >
+                <Calendar className="w-4 h-4" />
+                Reschedule
+              </Button>
+            </Link>
+          )}
+          {appointment.status === "Scheduled" && (
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:cursor-pointer"
               onClick={() => {
@@ -190,7 +211,21 @@ const Page = () => {
                 setShowCancelDialog(true);
               }}
             >
-              <X className="w-4 h-4 mr-1" />
+              {/* <X className="w-4 h-4 mr-1" /> */}
+              Cancel
+            </Button>
+          )}
+          {appointment.status === "Reschedule" && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10 hover:cursor-pointer"
+              onClick={() => {
+                setSelectedAppointment(appointment);
+                setShowCancelDialog(true);
+              }}
+            >
+              {/* <X className="w-4 h-4 mr-1" /> */}
               Cancel
             </Button>
           )}

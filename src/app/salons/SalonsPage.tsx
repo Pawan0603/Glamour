@@ -7,6 +7,7 @@ import SalonCard from '@/components/salon/SalonCard';
 import axios from 'axios';
 import { Salon } from '@/lib/interfaces';
 import { useSearchParams } from 'next/navigation';
+import SalonCardSkeleton from '@/components/skeleton/SalonCardSkeleton';
 
 
 const containerVariants = {
@@ -60,6 +61,7 @@ export default function page() {
   const [category, setCategory] = useState<string>("All");
 
   const fetchSalons = async (isNewSearch: boolean = false, query: string = "", page: number = 1) => {
+    setLoading(true);
     try {
       const response = await axios.get(`/api/salon`, {
         params: {
@@ -76,6 +78,8 @@ export default function page() {
     } catch (error) {
       console.error("Error fetching salons:", error);
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -255,6 +259,12 @@ export default function page() {
                 </motion.div>
               ))}
             </motion.div>
+          ) : loading === true ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <SalonCardSkeleton key={i} />
+              ))}
+            </div>
           ) : (
             <motion.div
               initial={{ opacity: 0 }}

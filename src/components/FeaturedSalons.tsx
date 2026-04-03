@@ -3,104 +3,59 @@
 import { motion } from "framer-motion";
 import { Star, MapPin, Clock, Heart } from "lucide-react";
 import Image from "next/image";
-
+import { Salon } from '@/lib/interfaces';
 import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import axios, { AxiosError } from "axios";
+import { toast } from "sonner";
+import Link from "next/link";
 
-type Salon = {
-  id: number;
-  name: string;
-  image: string;
-  rating: number;
-  reviews: number;
-  location: string;
-  distance: string;
-  services: string[];
-  price: string;
-  isOpen: boolean;
-};
-
-const salons: Salon[] = [
-  {
-    id: 1,
-    name: "Luxe Hair Studio",
-    image:
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=300&fit=crop",
-    rating: 4.9,
-    reviews: 234,
-    location: "Downtown, NYC",
-    distance: "0.8 mi",
-    services: ["Haircut", "Color", "Styling"],
-    price: "$$",
-    isOpen: true,
-  },
-  {
-    id: 2,
-    name: "Serenity Spa & Beauty",
-    image:
-      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop",
-    rating: 4.8,
-    reviews: 189,
-    location: "Midtown, NYC",
-    distance: "1.2 mi",
-    services: ["Facial", "Massage", "Nails"],
-    price: "$$$",
-    isOpen: true,
-  },
-  {
-    id: 3,
-    name: "The Glow Bar",
-    image:
-      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=300&fit=crop",
-    rating: 4.7,
-    reviews: 156,
-    location: "Brooklyn, NYC",
-    distance: "2.1 mi",
-    services: ["Makeup", "Skincare", "Brows"],
-    price: "$$",
-    isOpen: false,
-  },
-  {
-    id: 4,
-    name: "Elite Men's Grooming",
-    image:
-      "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=300&fit=crop",
-    rating: 4.9,
-    reviews: 312,
-    location: "SoHo, NYC",
-    distance: "1.5 mi",
-    services: ["Barber", "Shave", "Beard"],
-    price: "$$",
-    isOpen: true,
-  },
-  {
-    id: 5,
-    name: "Nail Art Paradise",
-    image:
-      "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=300&fit=crop",
-    rating: 4.6,
-    reviews: 98,
-    location: "Upper East, NYC",
-    distance: "3.0 mi",
-    services: ["Manicure", "Pedicure", "Art"],
-    price: "$",
-    isOpen: true,
-  },
-  {
-    id: 6,
-    name: "Zen Wellness Center",
-    image:
-      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop",
-    rating: 4.8,
-    reviews: 267,
-    location: "Chelsea, NYC",
-    distance: "1.8 mi",
-    services: ["Spa", "Wellness", "Therapy"],
-    price: "$$$",
-    isOpen: true,
-  },
-];
 
 export default function FeaturedSalons() {
+  const [salons, setSalons] = useState<Salon[]>([]);
+
+  const fetchFeaturedSalons = async (page: number) => {
+    try {
+      const res = await axios.get(`/api/salon/featuredSalon?page=${page}`);
+
+      setSalons(res.data.data)
+      console.log("featured salons: ", res.data.data)
+    } catch (err) {
+      const error = err as AxiosError<{ error: string }>
+      toast.error(error.response?.data.error || "Somethin went worng.")
+    }
+  }
+
+  useEffect(() => {
+    fetchFeaturedSalons(1);
+  }, []);
+
+  function isSalonOpen(
+    openingTime: string,
+    closingTime: string,
+    weeklyAvailability: string[]
+  ) {
+    const now = new Date();
+
+    // Today short name (Mon, Tue...)
+    const today = now.toLocaleDateString("en-US", { weekday: "short" });
+
+    // Check day
+    if (!weeklyAvailability.includes(today)) return false;
+
+    // Current minutes
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    // Opening minutes
+    const [oh, om] = openingTime.split(":").map(Number);
+    const openMinutes = oh * 60 + om;
+
+    // Closing minutes
+    const [ch, cm] = closingTime.split(":").map(Number);
+    const closeMinutes = ch * 60 + cm;
+
+    return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+  }
   return (
     <section className="py-16 md:py-20 lg:py-24 bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6">
@@ -125,7 +80,7 @@ export default function FeaturedSalons() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {salons.map((salon, index) => (
             <motion.div
-              key={salon.id}
+              key={salon._id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -136,8 +91,8 @@ export default function FeaturedSalons() {
                 {/* Image */}
                 <div className="relative h-48 overflow-hidden">
                   <Image
-                    src={salon.image}
-                    alt={salon.name}
+                    src={salon.salonCoverImage!}
+                    alt={salon.salonName}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
@@ -148,25 +103,24 @@ export default function FeaturedSalons() {
                   </button>
 
                   <span
-                    className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold ${
-                      salon.isOpen
-                        ? "bg-green-500 text-white"
-                        : "bg-muted text-muted-foreground"
-                    }`}
+                    className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold ${isSalonOpen(salon.openingTime, salon.closingTime, salon.weeklyAvailabity)
+                      ? "bg-green-500 text-white"
+                      : "bg-muted text-muted-foreground"
+                      }`}
                   >
-                    {salon.isOpen ? "Open Now" : "Closed"}
+                    {isSalonOpen(salon.openingTime, salon.closingTime, salon.weeklyAvailabity)? "Open Now" : "Closed"}
                   </span>
 
-                  <span className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-white/90 text-xs font-semibold">
+                  {/* <span className="absolute bottom-3 right-3 px-3 py-1 rounded-full bg-white/90 text-xs font-semibold">
                     {salon.price}
-                  </span>
+                  </span> */}
                 </div>
 
                 {/* Content */}
                 <div className="p-5">
                   <div className="flex justify-between mb-2">
                     <h3 className="font-display text-lg font-semibold">
-                      {salon.name}
+                      {salon.salonName}
                     </h3>
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
@@ -179,28 +133,30 @@ export default function FeaturedSalons() {
                   <div className="flex gap-4 text-sm text-muted-foreground mb-3">
                     <span className="flex items-center gap-1">
                       <MapPin className="w-4 h-4" />
-                      {salon.location}
+                      {salon.city}
                     </span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
-                      {salon.distance}
+                      {salon.openingTime} : {salon.closingTime}
                     </span>
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-4">
                     {salon.services.map((service) => (
                       <span
-                        key={service}
+                        key={service._id}
                         className="px-3 py-1 rounded-full bg-muted text-xs"
                       >
-                        {service}
+                        {service.servicesName}
                       </span>
                     ))}
                   </div>
 
-                  <Button className="w-full gradient-primary rounded-xl font-semibold">
-                    Book Now
-                  </Button>
+                  <Link href={`/salons/${salon._id}`}>
+                    <Button className="w-full gradient-primary rounded-xl font-semibold hover:cursor-pointer">
+                      Book Now
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </motion.div>

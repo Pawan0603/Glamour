@@ -134,6 +134,10 @@ const SalonSchema = new Schema<Salon>({
     rating: {
         type: Number,
         default: 3.3,
+    },
+    featured: {
+        type: Boolean,
+        default: false
     }
 
 }, { timestamps: true });

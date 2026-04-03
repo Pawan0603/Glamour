@@ -60,6 +60,7 @@ export interface Salon extends SalonFormData {
   services: Service[]; 
   barber: Barber[];
   rating: number;
+  featured: boolean;
 }
 
 

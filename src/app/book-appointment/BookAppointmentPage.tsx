@@ -167,6 +167,8 @@ export default function Page() {
     razorpay_signature: string,
     salonId: string,
   }) => {
+    setIsPaymentSuccess(true);
+
     const data = {
       razorpay_order_id,
       razorpay_payment_id,
@@ -274,7 +276,6 @@ export default function Page() {
       const res = await axios.post(`/api/salon/book-appointment`, data);
       toast.success(res.data.message || "Slot book successfully.")
       await handlePayment(totalPrice, res.data.data._id);
-      setIsPaymentSuccess(true);
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "somethin went worng.")

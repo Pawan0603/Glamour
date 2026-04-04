@@ -41,6 +41,8 @@ const getStatusIcon = (status: string) => {
       return <Clock className="w-4 h-4 text-amber-500" />;
     case "Cancelled":
       return <XCircle className="w-4 h-4 text-destructive" />;
+    case "Pending":
+      return <Clock className="w-4 h-4 text-amber-500" />;
     default:
       return null;
   }

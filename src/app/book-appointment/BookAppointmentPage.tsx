@@ -48,6 +48,12 @@ interface BusySlots {
   [barberName: string]: string[];
 }
 
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 export default function Page() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -153,6 +159,95 @@ export default function Page() {
     getSlotTimeLine(date);
   };
 
+  const verifyPayment = async ({ razorpay_order_id, razorpay_payment_id, razorpay_signature, salonId }: {
+    razorpay_order_id: string,
+    razorpay_payment_id: string,
+    razorpay_signature: string,
+    salonId: string,
+  }) => {
+    const data = {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      salonId,
+    }
+
+    try {
+      await axios.patch(`/api/payment/verify`, data);
+      toast.success("Payment verified and appointment scheduled successfully");
+      router.push("/my-appointments");
+    } catch (error) {
+      const err = error as AxiosError<{ error: string }>;
+      toast.error(err.response?.data.error || "somethin went worng.")
+    }
+  }
+
+  // payment functionality
+
+
+  const loadScript = (src: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = src;
+
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+
+      document.body.appendChild(script);
+    });
+  };
+
+  interface RazorpayOrder {
+    id: string;
+    amount: number;
+    currency: string;
+  }
+
+  const handlePayment = async (amount: number, salonId: string): Promise<void> => {
+    await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+
+    const res = await fetch("/api/payment/order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ amount: amount }),
+    });
+
+    const order: RazorpayOrder = await res.json();
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID as string,
+      amount: order.amount,
+      currency: "INR",
+      name: "Glamour",
+      description: "Test Transaction",
+      order_id: order.id,
+
+      handler: function (response: {
+        razorpay_order_id: string,
+        razorpay_payment_id: string,
+        razorpay_signature: string,
+      }) {
+        console.log("Payment Success", response);
+        verifyPayment({ razorpay_order_id: response.razorpay_order_id, razorpay_payment_id: response.razorpay_payment_id, razorpay_signature: response.razorpay_signature, salonId })
+      },
+
+      prefill: {
+        name: "Pawan",
+        email: "pawan@email.com",
+        contact: "9999999999",
+      },
+
+      theme: {
+        color: "#3399cc",
+      },
+    };
+
+    const paymentObject = new window.Razorpay(options);
+    paymentObject.open();
+  };
+
   const handleBookAppointment = async () => {
     const data = {
       customerId: user?.userId!,
@@ -168,14 +263,16 @@ export default function Page() {
       duration: serviceDuration,
       price: totalPrice,
       services: selectedServices,
-      status: "Scheduled",
+      status: "Pending",
+      paymentExpire: new Date(Date.now() + 12 * 60 * 1000).toISOString(),
     }
 
     try {
       setIsSubmitting(true);
       const res = await axios.post(`/api/salon/book-appointment`, data);
-      toast.success(res.data.message || "Appointment book successfully.")
-      router.push('/my-appointments')
+      toast.success(res.data.message || "Slot book successfully.")
+      await handlePayment(totalPrice, res.data.data._id);
+      // router.push('/my-appointments')
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "somethin went worng.")
@@ -199,6 +296,8 @@ export default function Page() {
     if (currentStep === 2) return selectedDate && selectedTime;
     return true;
   };
+
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -538,7 +637,7 @@ export default function Page() {
                     </div>
 
                     <Button type="button" onClick={handleBookAppointment} className="w-full" size="lg" disabled={isSubmitting}>
-                      {isSubmitting ? <span>Booking Appointment...</span> : <span>Confirm Appointment</span>}
+                      {isSubmitting ? <span>Processing...</span> : <span>Pay now</span>}
                     </Button>
                   </motion.div>
                 )}

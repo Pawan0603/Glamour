@@ -15,7 +15,7 @@ async function bookAppointment(req: AuthenticatedRequest) {
 
         await appointment.save();
 
-        return NextResponse.json({ success: true, message: "Appointment booked successfully." }, { status: 200 });
+        return NextResponse.json({ success: true, message: "Appointment booked successfully.", data: {_id: appointment._id} }, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "Internal server error..." }, { status: 500 });
     }

@@ -79,7 +79,7 @@ const getStatusConfig = (status: string) => {
   }
 };
 
-type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule";
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule" | "Pending";
 
 export default function OwnerAppointments() {
   const [filter, setFilter] = useState("all");

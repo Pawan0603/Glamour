@@ -34,14 +34,24 @@ async function getSlotTimeLine(req: AuthenticatedRequest, context: RouteContext)
     const end = new Date(date);
     end.setHours(23, 59, 59, 999);
 
+    const now = new Date();
+
     const appointments = await AppointmentModel.find({
       salonId: id,
       appointmentDate: {
         $gte: start,
         $lte: end,
       },
+      $or: [
+        { status: { $in: ["Scheduled", "Reschedule"] } },
+        // Pending hai but payment expire NAHI hui → slot blocked
+        {
+          status: "Pending",
+          paymentExpire: { $gt: now },
+        },
+      ],
     }).select("barberName appointmentTime duration");
-    
+
     if (appointments.length === 0) {
       return NextResponse.json({ success: true, data: [] }, { status: 200 });
     }

@@ -30,7 +30,7 @@ import { toast } from "sonner";
 import { IAppointment } from "@/lib/interfaces";
 import Link from "next/link";
 
-type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule";
+type AppointmentStatus = "Scheduled" | "Completed" | "Cancelled" | "Incomplete" | "Reschedule" | "Pending";
 
 const statusConfig: Record<AppointmentStatus, { label: string; className: string }> = {
   Scheduled: {
@@ -53,6 +53,10 @@ const statusConfig: Record<AppointmentStatus, { label: string; className: string
     label: "Cancelled",
     className: "bg-yellow-100 text-red-700 border-red-200",
   },
+  Pending: {
+    label: "Pending",
+    className: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  }
 };
 
 const containerVariants = {
@@ -78,7 +82,7 @@ const Page = () => {
   const [pastAppointments, setPastAppointments] = useState<IAppointment[]>([]);
 
   const filterAppointment = (data: IAppointment[]) => {
-    setUpcomingAppointments(data?.filter(a => a.status === "Scheduled" || a.status === "Reschedule") || []);
+    setUpcomingAppointments(data?.filter(a => a.status === "Scheduled" || a.status === "Reschedule" || a.status === "Pending") || []);
     setPastAppointments(data?.filter(a => a.status === "Cancelled" || a.status === "Completed") || [])
   }
 

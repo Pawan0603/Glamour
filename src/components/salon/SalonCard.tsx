@@ -110,7 +110,7 @@ export default function SalonCard({ _id, salonName, salonCoverImage, city, descr
           ))}
         </div>
         <Link href={`/salons/${_id}`}>
-          <Button className="w-full gradient-primary rounded-xl font-semibold">
+          <Button className="w-full gradient-primary rounded-xl font-semibold hover:cursor-pointer">
             Book now
           </Button>
         </Link>

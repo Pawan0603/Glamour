@@ -12,7 +12,8 @@ import {
   ChevronRight,
   Zap,
   Check,
-  MapPin
+  MapPin,
+  CircleCheckBig
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export default function Page() {
   const [availableSlot, setAvailableSlot] = useState<string[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isPaymentSuccess, setIsPaymentSuccess] = useState<boolean>(false);
 
   const steps = [
     { id: 1, title: "Select Barber" },
@@ -234,9 +236,9 @@ export default function Page() {
       },
 
       prefill: {
-        name: "Pawan",
-        email: "pawan@email.com",
-        contact: "9999999999",
+        name: user?.name,
+        email: user?.email,
+        contact: user?.phone || "",
       },
 
       theme: {
@@ -272,7 +274,7 @@ export default function Page() {
       const res = await axios.post(`/api/salon/book-appointment`, data);
       toast.success(res.data.message || "Slot book successfully.")
       await handlePayment(totalPrice, res.data.data._id);
-      // router.push('/my-appointments')
+      setIsPaymentSuccess(true);
     } catch (error) {
       const err = error as AxiosError<{ error: string }>;
       toast.error(err.response?.data.error || "somethin went worng.")
@@ -636,9 +638,16 @@ export default function Page() {
                       </div>
                     </div>
 
-                    <Button type="button" onClick={handleBookAppointment} className="w-full" size="lg" disabled={isSubmitting}>
-                      {isSubmitting ? <span>Processing...</span> : <span>Pay now</span>}
-                    </Button>
+                    {isPaymentSuccess ? (
+                      <Button type="button" className="w-full bg-green-500 items-center" size="lg" disabled>
+                        <CircleCheckBig />
+                        Payment Successful
+                      </Button>
+                    ) : (
+                      <Button type="button" onClick={handleBookAppointment} className="w-full hover:cursor-pointer" size="lg" disabled={isSubmitting}>
+                        {isSubmitting ? <span>Processing...</span> : <span>Pay now</span>}
+                      </Button>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>
